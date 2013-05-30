@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from 'breadcrumbs-macro.html' import render_breadcrumbs %}
+{% from 'nav-macro.html' import render_navbar %}
+{% from 'messages-macro.html' import render_messages %}
+
+{% block navbar %}
+  {{ render_navbar (brand=rrequest.params.brand, links=rrequest.params.nav_links) }}
+{% endblock %}
+
+{% block main %}
+  {# render breadcrumbs #}
+  {{ render_breadcrumbs(crumbs=rrequest.breadcrumbs) }}
+
+  <h2>Submit Crash Report<small></small></h2>
+
+  <div class="row">
+    <div class="col-md-8">
+      <form method="post" class="well">
+        <div class="form-group">
+          <label for="crash">Crash</label>
+          <textarea class="form-control" id="crash" name="crash"></textarea>
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  {# render messages #}
+  {{ render_messages(messages=rrequest.messages) }}
+
+{% endblock %}

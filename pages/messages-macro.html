@@ -1,0 +1,12 @@
+{# messages is a list of string #}
+{% macro render_messages(messages=None) %}
+  {% if messages %}
+    <div class="bg-info">
+      <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+{% endmacro %}

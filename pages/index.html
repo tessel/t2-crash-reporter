@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from 'breadcrumbs-macro.html' import render_breadcrumbs %}
+{% from 'nav-macro.html' import render_navbar %}
+
+{% block navbar %}
+  {{ render_navbar (brand=rrequest.params.brand, links=rrequest.params.nav_links) }}
+{% endblock %}
+
+{% block main %}
+  {# render breadcrumbs #}
+  {{ render_breadcrumbs(crumbs=rrequest.breadcrumbs) }}
+
+  <h2>T2 Crash Detector <small>services</small></h2>
+
+  <div class="row" style="margin: 2rem;">
+    <div class="col-md-8">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          API Directory
+        </div>
+        <div class="panel-body">
+        {% if rrequest.params.directory_links %}
+          <ul>
+          {% for link in rrequest.params.directory_links %}
+            <li><a href="{{link.url}}">{{link.title}}</a></li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

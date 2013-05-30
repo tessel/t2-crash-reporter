@@ -1,0 +1,16 @@
+{% macro render_breadcrumbs(crumbs=None) %}
+
+{% if crumbs %}
+  <div class="row">
+    <div class="col-md-12">
+      <ul class="breadcrumb">
+        {# crumb has 2 properties: name, href #}
+        {% for crumb in crumbs %}
+          <li><a href="{{crumb.href}}">{{crumb.name}}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endif %}
+
+{% endmacro %}

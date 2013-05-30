@@ -1,0 +1,20 @@
+{% macro render_navbar(brand=None, links=None) %}
+  {% if brand %}
+    <nav class="navbar navbar-default navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="{{brand.url}}">{{brand.title}}</a>
+          {% if links %}
+            <ul class="nav navbar-nav">
+              {% for link in links %}
+                <li {{ 'class="active"' if link.active }}>
+                  <a href="{{link.url}}">{{link.title}}</a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+  {% endif %}
+{% endmacro %}

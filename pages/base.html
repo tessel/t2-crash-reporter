@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{rrequest.params.title if rrequest.params.title else 'API Console'}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    {% block linkDefinitions %}
+    {% endblock %}
+
+    <link href="/static/css/site.css" rel="stylesheet">
+    <style>
+      {% block styleDefinitions %}
+      {% endblock %}
+    </style>
+
+  </head>
+
+  <body class="root">
+
+    {% block navbar %}
+    {% endblock %}
+
+    <div class="container-fluid">
+      {% block main %}
+      {% endblock %}
+    </div>
+
+    <script src="/static/lib/require.js"></script>
+
+    <script type="text/javascript">
+      require.config({
+        baseUrl: '/static/lib',
+        paths: {
+          'jquery': '/static/lib/jquery',
+          'bootstrap': '/static/bootstrap/js'
+        }
+      });
+
+      require(['jquery/jquery', 'bootstrap/bootstrap'], function($) {
+        console.log('Init complete.');
+      });
+    </script>
+
+    <!--require is now all async -->
+    {% block moreScripts %}
+    {% endblock %}
+
+  </body>
+</html>

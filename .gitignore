@@ -1,0 +1,7 @@
+._DS_Store
+.DS_Store
+*.pyc
+.idea
+Thumbs.db
+node_modules
+node_modules/*
