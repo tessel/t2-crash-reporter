@@ -6,45 +6,48 @@ import jinja2
 
 
 # decorator for all requests
-def common_request(callable):
+def common_request(callable_function):
     def wrapped_callable(*args, **kwargs):
         args_list = list(args)
         rrequest = RRequest(args_list[0])
         args_list[0] = rrequest
         try:
-            return callable(*args_list, **kwargs)
+            return callable_function(*args_list, **kwargs)
         except Exception, e:
             logging.exception('Exception :, %s' % unicode(e))
             rrequest.add_error('Exception :, %s' % unicode(e))
             rrequest.add_to_json('error', unicode(e))
             rrequest.render('500.html')
+
     return wrapped_callable
 
 
 def cache_it(key=None, time=86400):
-    def decorator(callable):
+    def decorator(callable_function):
         def wrapped_callable(*args, **kwargs):
             cached_value = memcache.get(key)
             if cached_value:
                 return cached_value
             else:
-                value = callable(*args, **kwargs)
+                value = callable_function(*args, **kwargs)
                 if value is not None:
                     memcache.set(key, value, time=time)
                 return value
+
         return wrapped_callable
+
     return decorator
 
 
 class RRequest(object):
-
     environment = None
 
     @classmethod
     def jinja2_environment(cls):
         # set the template search path to pages
         if not RRequest.environment:
-            RRequest.environment = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'pages')))
+            RRequest.environment = jinja2.Environment(
+                loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'pages')))
         return RRequest.environment
 
     def __init__(self, request_handler):
@@ -122,4 +125,5 @@ class RRequest(object):
             self.request_handler.response.out.write(jsonified_json)
         else:
             '''Generate HTML response '''
-            self.request_handler.response.out.write(RRequest.jinja2_environment().get_template(template_name).render({'rrequest': self}))
+            self.request_handler.response.out.write(
+                RRequest.jinja2_environment().get_template(template_name).render({'rrequest': self}))
