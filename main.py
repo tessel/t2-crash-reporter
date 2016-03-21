@@ -70,7 +70,7 @@ class ViewCrashHandler(webapp2.RequestHandler):
         request.add_parameter('nav_links', nav_links)
 
     @common_request
-    def get(self, fingerprint=None):
+    def get(self):
         self.request_handler.common(self)
         if not self.empty_query_string('fingerprint'):
             fingerprint = self.get_parameter('fingerprint')
@@ -87,7 +87,6 @@ application = webapp2.WSGIApplication(
         webapp2.Route('/', handler='main.RootHandler', name='home'),
         webapp2.Route('/crashes/submit', handler='main.SubmitCrashHandler', name='submit_crash'),
         webapp2.Route('/crashes', handler='main.ViewCrashHandler', name='view_crash'),
-        webapp2.Route('/crashes/<fingerprint>', handler='main.ViewCrashHandler', name='view_fingerprint'),
     ]
     , debug=True
 )

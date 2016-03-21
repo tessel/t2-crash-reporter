@@ -42,7 +42,6 @@ def cache_it(key=None, time=86400):
 
 def readable_date(milliseconds):
     date_time = from_milliseconds(milliseconds)
-    print 'Date time is %s' % date_time
     return date_time.strftime('%Y-%m-%d %H:%M:%S')
 
 
