@@ -1,0 +1,14 @@
+{% macro render_crash_report(crash_report = None) %}
+  {% if crash_report %}
+    <div class="well">
+      <ul class="list-group">
+        <li class="list-group-item">
+            <span class="badge">{{ crash_report.count }}</span>
+            {{ crash_report.fingerprint }}
+        </li>
+      </ul>
+      <pre>{{ crash_report.crash }}</pre>
+      <p class="text-info">Last report submitted at {{ crash_report.time|readable_date }}</p>
+    </div>
+  {% endif %}
+{% endmacro %}

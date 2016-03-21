@@ -4,6 +4,7 @@ import logging
 import json
 import jinja2
 
+from model import from_milliseconds
 
 # decorator for all requests
 def common_request(callable_function):
@@ -14,8 +15,8 @@ def common_request(callable_function):
         try:
             return callable_function(*args_list, **kwargs)
         except Exception, e:
-            logging.exception('Exception :, %s' % unicode(e))
-            rrequest.add_error('Exception :, %s' % unicode(e))
+            logging.exception('Exception : %s' % unicode(e))
+            rrequest.add_error('Exception : %s' % unicode(e))
             rrequest.add_to_json('error', unicode(e))
             rrequest.render('500.html')
 
@@ -39,6 +40,12 @@ def cache_it(key=None, time=86400):
     return decorator
 
 
+def readable_date(milliseconds):
+    date_time = from_milliseconds(milliseconds)
+    print 'Date time is %s' % date_time
+    return date_time.strftime('%Y-%m-%d %H:%M:%S')
+
+
 class RRequest(object):
     environment = None
 
@@ -48,6 +55,9 @@ class RRequest(object):
         if not RRequest.environment:
             RRequest.environment = jinja2.Environment(
                 loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'pages')))
+
+            # add readable date filter to make it available for templates
+            RRequest.environment.filters['readable_date'] = readable_date
         return RRequest.environment
 
     def __init__(self, request_handler):

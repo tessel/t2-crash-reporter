@@ -6,7 +6,7 @@ from google.appengine.ext import db
 
 
 def from_milliseconds(millis):
-    return datetime.datetime.utcfromtimestamp(millis)
+    return datetime.datetime.utcfromtimestamp(millis / 1000)
 
 
 def to_milliseconds(date_time):
@@ -77,6 +77,16 @@ class CrashReport(db.Expando):
             crash_report.put()
             memcache.decr(key_name, delta)
         return crash_report
+
+    @classmethod
+    def get_crash(cls, fingerprint):
+        q = CrashReport.all()
+        q.filter('name =', CrashReport.key_name(fingerprint))
+        crash_report = q.get()
+        if not crash_report:
+            return None
+        else:
+            return crash_report
 
     @classmethod
     def key_name(cls, name):

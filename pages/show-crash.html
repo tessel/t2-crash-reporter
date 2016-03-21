@@ -2,6 +2,7 @@
 {% from 'breadcrumbs-macro.html' import render_breadcrumbs %}
 {% from 'nav-macro.html' import render_navbar %}
 {% from 'messages-macro.html' import render_messages %}
+{% from 'crash-report-macro.html' import render_crash_report %}
 
 {% block navbar %}
   {{ render_navbar (brand=rrequest.params.brand, links=rrequest.params.nav_links) }}
@@ -11,14 +12,14 @@
   {# render breadcrumbs #}
   {{ render_breadcrumbs(crumbs=rrequest.breadcrumbs) }}
 
-  <h2>Submit Crash Report<small></small></h2>
+  <h2>Show Crash<small></small></h2>
 
   <div class="row">
     <div class="col-md-8">
-      <form method="post" class="well">
+      <form method="get" class="well">
         <div class="form-group">
-          <label for="crash">Crash</label>
-          <textarea rows="15" class="form-control" id="crash" name="crash"></textarea>
+          <label for="fingerprint">Enter Fingerprint</label>
+          <input name="fingerprint" id="fingerprint" type="text" />
         </div>
         <div class="form-group">
           <label for="f">Response Format</label>
@@ -38,6 +39,9 @@
       </form>
     </div>
   </div>
+
+  {# render crash report #}
+  {{ render_crash_report(crash_report = rrequest.params.crash_report) }}
 
   {# render messages #}
   {{ render_messages(messages=rrequest.messages) }}
