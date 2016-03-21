@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from 'breadcrumbs-macro.html' import render_breadcrumbs %}
+{% from 'nav-macro.html' import render_navbar %}
+{% from 'messages-macro.html' import render_messages %}
+{% from 'crash-list-macro.html' import render_crash_list %}
+
+{% block navbar %}
+  {{ render_navbar (brand=rrequest.params.brand, links=rrequest.params.nav_links) }}
+{% endblock %}
+
+{% block main %}
+  {# render breadcrumbs #}
+  {{ render_breadcrumbs(crumbs=rrequest.breadcrumbs) }}
+
+  <h2>Trending Crashes<small></small></h2>
+
+  <div class="row">
+    <div class="col-md-8">
+        {# render trending list #}
+        {{ render_crash_list(crash_list=rrequest.params.trending, has_more=rrequest.params.has_more) }}
+    </div>
+  </div>
+
+  {# render messages #}
+  {{ render_messages(messages=rrequest.messages) }}
+
+{% endblock %}

@@ -95,6 +95,7 @@ class CrashReport(db.Expando):
     @classmethod
     def to_json(cls, entity):
         return {
+            'key': entity.key(),
             'crash': entity.crash,
             'fingerprint': entity.fingerprint,
             'time': to_milliseconds(entity.date_time),  # in millis

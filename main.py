@@ -20,6 +20,7 @@ class RootHandler(webapp2.RequestHandler):
         directory_links = list()
         directory_links.append(Link('Submit Crash', uri_for('submit_crash')))
         directory_links.append(Link('View Crash', uri_for('view_crash')))
+        directory_links.append(Link('Trending Crashes', uri_for('trending_crashes')))
         self.add_parameter('directory_links', directory_links)
         self.render('index.html')
 
@@ -82,11 +83,35 @@ class ViewCrashHandler(webapp2.RequestHandler):
         self.render('show-crash.html')
 
 
+class TrendingCrashesHandler(webapp2.RequestHandler):
+    def common(self, request):
+        request.add_parameter('title', 'Show Crash')
+        request.add_breadcrumb('Home', uri_for('home'))
+        request.add_breadcrumb('Trending Crashes', uri_for('trending_crashes'))
+        brand = Link('T2 Crash Detector', uri_for('home'))
+        nav_links = list()
+        nav_links.append(Link('About', '#'))
+        nav_links.append(Link('Contact', '#'))
+        request.add_parameter('brand', brand)
+        request.add_parameter('nav_links', nav_links)
+
+    @common_request
+    def get(self):
+        self.request_handler.common(self)
+        start = self.get_parameter('start')
+        trending_result = CrashReports.trending(start=start)
+        self.add_parameter('trending', trending_result.get('trending', list()))
+        self.add_parameter('has_more', trending_result.get('has_more', False))
+        self.add_to_json('trending', trending_result)
+        self.render('trending.html')
+
+
 application = webapp2.WSGIApplication(
     [
         webapp2.Route('/', handler='main.RootHandler', name='home'),
         webapp2.Route('/crashes/submit', handler='main.SubmitCrashHandler', name='submit_crash'),
         webapp2.Route('/crashes', handler='main.ViewCrashHandler', name='view_crash'),
+        webapp2.Route('/trending', handler='main.TrendingCrashesHandler', name='trending_crashes'),
     ]
     , debug=True
 )
