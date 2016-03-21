@@ -41,7 +41,7 @@ class CrashReport(db.Expando):
     """
     Represents an Crash Report item
     """
-    name = db.StringProperty(required=True) # key_name and not the sharded key name
+    name = db.StringProperty(required=True)  # key_name and not the sharded key name
     crash = db.TextProperty(required=True)
     fingerprint = db.StringProperty(required=True)
     date_time = db.DateTimeProperty(required=True, default=datetime.datetime.utcnow())
@@ -71,7 +71,7 @@ class CrashReport(db.Expando):
         if is_add:
             crash_report.count += delta
             crash_report.put()
-            memcache.incr(key_name, delta)
+            memcache.incr(key_name, delta, initial_value=1)
         else:
             crash_report.count -= delta
             crash_report.put()

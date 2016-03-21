@@ -1,5 +1,3 @@
-import json
-
 import webapp2
 from webapp2 import uri_for
 
@@ -51,9 +49,10 @@ class SubmitCrashHandler(webapp2.RequestHandler):
             crash = self.get_parameter('crash')
             # strip spaces around the crash report
             crash_report = CrashReports.add_crash_report(crash.strip())
-            json_contents = json.dumps(CrashReport.to_json(crash_report), indent=2)
-            message = 'Added Crash Report added: \n%s' % json_contents
+            message = 'Added Crash Report with fingerprint, count) => (%s, %s)' % \
+                      (crash_report.fingerprint, CrashReport.get_count(crash_report.name))
             self.add_message(message)
+            self.add_to_json('crash_report', CrashReport.to_json(crash_report))
             self.render('submit-crash.html')
 
 
