@@ -1,5 +1,5 @@
-application: t2-crash-detector
-version: 1
+application: t2-crash-reporter
+version: dev
 runtime: python27
 api_version: 1
 threadsafe: true
