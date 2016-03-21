@@ -3,8 +3,8 @@
     <div class="well">
       <ul class="list-group">
         <li class="list-group-item">
-            <span class="badge">{{ crash_report.count }}</span>
-            {{ crash_report.fingerprint }}
+            <span class="badge">Count {{ crash_report.count }}</span>
+            <b>Fingerprint : </b> <code>{{ crash_report.fingerprint }}</code>
         </li>
       </ul>
       <pre>{{ crash_report.crash }}</pre>
