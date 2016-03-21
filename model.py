@@ -71,7 +71,7 @@ class CrashReport(db.Expando):
         if is_add:
             crash_report.count += delta
             crash_report.put()
-            memcache.incr(key_name, delta, initial_value=1)
+            memcache.incr(key_name, delta, initial_value=0)
         else:
             crash_report.count -= delta
             crash_report.put()
