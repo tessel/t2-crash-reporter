@@ -19,9 +19,9 @@ class CrashReports(object):
     Encapsulates all the logic for creating/ querying crash reports.
     """
     @classmethod
-    def add_crash_report(cls, report):
+    def add_crash_report(cls, report, labels=None):
         fingerprint = sim_hash(report)
-        crash_report = CrashReport.add_or_remove(fingerprint, report)
+        crash_report = CrashReport.add_or_remove(fingerprint, report, labels=labels)
         return crash_report
 
     @classmethod

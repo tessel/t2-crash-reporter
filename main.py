@@ -5,6 +5,9 @@ from common import common_request
 from model import CrashReport, Link
 from util import CrashReports
 
+import csv
+import StringIO
+
 
 class RootHandler(webapp2.RequestHandler):
     @common_request
@@ -18,9 +21,9 @@ class RootHandler(webapp2.RequestHandler):
         self.add_parameter('brand', brand)
         self.add_parameter('nav_links', nav_links)
         directory_links = list()
+        directory_links.append(Link('Trending Crashes', uri_for('trending_crashes')))
         directory_links.append(Link('Submit Crash', uri_for('submit_crash')))
         directory_links.append(Link('View Crash', uri_for('view_crash')))
-        directory_links.append(Link('Trending Crashes', uri_for('trending_crashes')))
         self.add_parameter('directory_links', directory_links)
         self.render('index.html')
 
@@ -42,15 +45,28 @@ class SubmitCrashHandler(webapp2.RequestHandler):
         self.request_handler.common(self)
         self.render('submit-crash.html')
 
+    @classmethod
+    def csv_to_list(cls, input_as_csv):
+        if not input_as_csv:
+            return None
+        else:
+            input_as_io = StringIO.StringIO(input_as_csv)
+            reader = csv.reader(input_as_io, delimiter=',')
+            tokens = list()
+            for token in reader:
+                tokens.extend(token)
+            return tokens
+
     @common_request
     def post(self):
         self.request_handler.common(self)
-        if self.empty_query_string('crash'):
+        if self.empty_query_string('crash', 'labels'):
             self.request_handler.redirect(uri_for('submit_crash'))
         else:
             crash = self.get_parameter('crash')
+            labels = SubmitCrashHandler.csv_to_list(self.get_parameter('labels'))
             # strip spaces around the crash report
-            crash_report = CrashReports.add_crash_report(crash.strip())
+            crash_report = CrashReports.add_crash_report(crash.strip(), labels)
             message = 'Added Crash Report with fingerprint, count) => (%s, %s)' % \
                       (crash_report.fingerprint, CrashReport.get_count(crash_report.name))
             self.add_message(message)

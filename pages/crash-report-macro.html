@@ -6,6 +6,13 @@
             <span class="badge">Count {{ crash_report.count }}</span>
             <b>Fingerprint : </b> <code>{{ crash_report.fingerprint }}</code>
         </li>
+        {% if crash_report.labels %}
+          <li class="list-group-item">
+            {% for label in crash_report.labels %}
+              <span class="label label-primary large-text">{{ label }}</span>
+            {% endfor %}
+          </li>
+        {% endif %}
       </ul>
       <pre>{{ crash_report.crash }}</pre>
       <p class="text-info">Last report submitted at {{ crash_report.time|readable_date }}</p>

@@ -13,7 +13,7 @@ def sim_hash(trace, limit=512):
         split_list = [word for word in words if word in split_set]
         for i in range(min(len(split_list), limit)):
             result ^= hash(split_list[i])
-        return unicode(result)
+        return unicode(hex(result))
     else:
         return None
 

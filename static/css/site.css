@@ -5,3 +5,7 @@ body {
 form {
     margin: 2rem;
 }
+
+.large-text {
+    font-size: 1.25rem;
+}

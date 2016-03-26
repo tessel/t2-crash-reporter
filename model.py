@@ -42,6 +42,7 @@ class CrashReport(db.Expando):
     Represents an Crash Report item
     """
     name = db.StringProperty(required=True)  # key_name and not the sharded key name
+    labels = db.StringListProperty(default=[])
     crash = db.TextProperty(required=True)
     fingerprint = db.StringProperty(required=True)
     date_time = db.DateTimeProperty(required=True, default=datetime.datetime.utcnow())
@@ -61,13 +62,14 @@ class CrashReport(db.Expando):
         return int(total)
 
     @classmethod
-    def add_or_remove(cls, fingerprint, crash, is_add=True, delta=1):
+    def add_or_remove(cls, fingerprint, crash, labels=None, is_add=True, delta=1):
         key_name = CrashReport.key_name(fingerprint)
         config = ShardedCounterConfig.get_sharded_config(key_name)
         shards = config.shards
         shard_to_use = random.randint(0, shards-1)
         shard_key_name = key_name + '_' + str(shard_to_use)
-        crash_report = CrashReport.get_or_insert(shard_key_name, name=key_name, crash=crash, fingerprint=fingerprint)
+        crash_report = CrashReport.get_or_insert(shard_key_name,
+                                                 name=key_name, crash=crash, fingerprint=fingerprint, labels=labels)
         if is_add:
             crash_report.count += delta
             crash_report.put()
@@ -97,6 +99,7 @@ class CrashReport(db.Expando):
         return {
             'key': entity.key(),
             'crash': entity.crash,
+            'labels': entity.labels or list(),
             'fingerprint': entity.fingerprint,
             'time': to_milliseconds(entity.date_time),  # in millis
             'count': cls.get_count(entity.name)
