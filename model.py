@@ -97,7 +97,7 @@ class CrashReport(db.Expando):
     @classmethod
     def to_json(cls, entity):
         return {
-            'key': entity.key(),
+            'key': unicode(entity.key()),
             'crash': entity.crash,
             'labels': entity.labels or list(),
             'fingerprint': entity.fingerprint,
