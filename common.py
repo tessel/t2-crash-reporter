@@ -98,9 +98,9 @@ class RRequest(object):
         if args:
             for key in args:
                 value = self.get_parameter(key, None, None)
-                if value and len(value) > 0:
-                    return False
-        return True
+                if not value or len(value) <= 0:
+                    return True
+        return False
 
     def add_breadcrumb(self, name, href):
         self.breadcrumbs.append({'name': name, 'href': href})
