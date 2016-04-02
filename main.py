@@ -9,17 +9,27 @@ import csv
 import StringIO
 
 
+class RequestHandlerUtils(object):
+    @classmethod
+    def add_brand(cls, handler):
+        brand = Link('Tessel Error Reporter', uri_for('home'))
+        handler.add_parameter('brand', brand)
+
+    @classmethod
+    def add_nav_links(cls, handler):
+        nav_links = list()
+        nav_links.append(Link('Who we are', 'https://tessel.io/'))
+        nav_links.append(Link('About', 'https://tessel.io/about'))
+        handler.add_parameter('nav_links', nav_links)
+
+
 class RootHandler(webapp2.RequestHandler):
     @common_request
     def get(self):
-        self.add_parameter('title', 'T2 Crash Detector')
-        self.add_breadcrumb('Home', uri_for('home'))
-        brand = Link('T2 Crash Detector', uri_for('home'))
-        nav_links = list()
-        nav_links.append(Link('About', '#'))
-        nav_links.append(Link('Contact', '#'))
-        self.add_parameter('brand', brand)
-        self.add_parameter('nav_links', nav_links)
+        self.add_parameter('title', 'Tessel Error Reporter')
+        self.add_breadcrumb('Tessel Error Reporter', uri_for('home'))
+        RequestHandlerUtils.add_brand(self)
+        RequestHandlerUtils.add_nav_links(self)
         directory_links = list()
         directory_links.append(Link('Trending Crashes', uri_for('trending_crashes')))
         directory_links.append(Link('Submit Crash', uri_for('submit_crash')))
@@ -29,16 +39,12 @@ class RootHandler(webapp2.RequestHandler):
 
 
 class SubmitCrashHandler(webapp2.RequestHandler):
-    def common(self, request):
-        request.add_parameter('title', 'Submit Crash Report')
-        request.add_breadcrumb('Home', uri_for('home'))
-        request.add_breadcrumb('Submit Crash', uri_for('submit_crash'))
-        brand = Link('T2 Crash Detector', uri_for('home'))
-        nav_links = list()
-        nav_links.append(Link('About', '#'))
-        nav_links.append(Link('Contact', '#'))
-        request.add_parameter('brand', brand)
-        request.add_parameter('nav_links', nav_links)
+    def common(self, handler):
+        handler.add_parameter('title', 'Submit Crash Report')
+        handler.add_breadcrumb('Home', uri_for('home'))
+        handler.add_breadcrumb('Submit Crash', uri_for('submit_crash'))
+        RequestHandlerUtils.add_brand(handler)
+        RequestHandlerUtils.add_nav_links(handler)
 
     @common_request
     def get(self):
@@ -75,16 +81,12 @@ class SubmitCrashHandler(webapp2.RequestHandler):
 
 
 class ViewCrashHandler(webapp2.RequestHandler):
-    def common(self, request):
-        request.add_parameter('title', 'Show Crash')
-        request.add_breadcrumb('Home', uri_for('home'))
-        request.add_breadcrumb('View Crash', uri_for('view_crash'))
-        brand = Link('T2 Crash Detector', uri_for('home'))
-        nav_links = list()
-        nav_links.append(Link('About', '#'))
-        nav_links.append(Link('Contact', '#'))
-        request.add_parameter('brand', brand)
-        request.add_parameter('nav_links', nav_links)
+    def common(self, handler):
+        handler.add_parameter('title', 'Show Crash')
+        handler.add_breadcrumb('Home', uri_for('home'))
+        handler.add_breadcrumb('View Crash', uri_for('view_crash'))
+        RequestHandlerUtils.add_brand(handler)
+        RequestHandlerUtils.add_nav_links(handler)
 
     @common_request
     def get(self):
@@ -100,16 +102,12 @@ class ViewCrashHandler(webapp2.RequestHandler):
 
 
 class TrendingCrashesHandler(webapp2.RequestHandler):
-    def common(self, request):
-        request.add_parameter('title', 'Show Crash')
-        request.add_breadcrumb('Home', uri_for('home'))
-        request.add_breadcrumb('Trending Crashes', uri_for('trending_crashes'))
-        brand = Link('T2 Crash Detector', uri_for('home'))
-        nav_links = list()
-        nav_links.append(Link('About', '#'))
-        nav_links.append(Link('Contact', '#'))
-        request.add_parameter('brand', brand)
-        request.add_parameter('nav_links', nav_links)
+    def common(self, handler):
+        handler.add_parameter('title', 'Show Crash')
+        handler.add_breadcrumb('Home', uri_for('home'))
+        handler.add_breadcrumb('Trending Crashes', uri_for('trending_crashes'))
+        RequestHandlerUtils.add_brand(handler)
+        RequestHandlerUtils.add_nav_links(handler)
 
     @common_request
     def get(self):
