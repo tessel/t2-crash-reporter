@@ -1,5 +1,6 @@
 from model import CrashReport
 from simhash import sim_hash
+from search_model import Search
 
 from google.appengine.ext.db import Key
 
@@ -22,6 +23,8 @@ class CrashReports(object):
     def add_crash_report(cls, report, labels=None):
         fingerprint = sim_hash(report)
         crash_report = CrashReport.add_or_remove(fingerprint, report, labels=labels)
+        # add crash report to index
+        Search.add_to_index(crash_report)
         return crash_report
 
     @classmethod
