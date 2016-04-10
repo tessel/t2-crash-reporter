@@ -102,7 +102,7 @@ class CrashReport(db.Expando):
             'labels': entity.labels or list(),
             'fingerprint': entity.fingerprint,
             'time': to_milliseconds(entity.date_time),  # in millis
-            'count': cls.get_count(entity.name)
+            'count': CrashReport.get_count(entity.name)
         }
 
 
