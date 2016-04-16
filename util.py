@@ -57,6 +57,8 @@ class CrashReports(object):
                     uniques.add(crash_report.name)
                     crash_report = CrashReport.get_crash(crash_report.fingerprint)
                     trending.append(CrashReport.to_json(crash_report))
+
+        trending = sorted(trending, key=lambda report: report['count'], reverse=True)
         return {
             'trending': trending,
             'has_more': has_more
