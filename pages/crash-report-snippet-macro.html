@@ -1,0 +1,19 @@
+{% macro render_crash_snippet(crash_report = None) %}
+  {% if crash_report %}
+    <div class="panel panel-default">
+      <!-- Default panel contents -->
+      <div class="panel-heading">
+        Fingerprint <a href="{{ crash_report.fingerprint|crash_uri }}">
+          {{ crash_report.fingerprint }}
+        </a>
+
+        <span class="pull-right">
+          <span class="badge">{{ crash_report.count }}</span>
+        </span>
+      </div>
+      <div class="panel-body">
+        <pre class="prettyprint">{{ crash_report.crash|snippetize  }}</pre>
+      </div>
+    </div>
+  {% endif %}
+{% endmacro %}

@@ -34,11 +34,12 @@
         baseUrl: '/static/lib',
         paths: {
           'jquery': '/static/lib/jquery',
-          'bootstrap': '/static/bootstrap/js'
+          'bootstrap': '/static/bootstrap/js',
+          'google-prettify': '/static/lib/google-prettify'
         }
       });
 
-      require(['jquery/jquery', 'bootstrap/bootstrap'], function($) {
+      require(['jquery/jquery', 'bootstrap/bootstrap', 'google-prettify/run_prettify'], function($) {
         console.log('Init complete.');
       });
     </script>

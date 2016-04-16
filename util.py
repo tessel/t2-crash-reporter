@@ -9,6 +9,15 @@ def crash_uri(fingerprint):
     return '/crashes?fingerprint=%s' % fingerprint
 
 
+def snippetize(trace, snippet_length=3):
+    if not trace:
+        return None
+    else:
+        lines = trace.splitlines(True)
+        content = [line for line in lines if len(line.strip()) > 0][:snippet_length]
+        return '%s...' % ''.join(content)
+
+
 class CrashReportException(Exception):
     """
     Defines the exception type

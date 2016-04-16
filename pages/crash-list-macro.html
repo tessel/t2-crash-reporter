@@ -1,12 +1,9 @@
+{% from 'crash-report-snippet-macro.html' import render_crash_snippet %}
+
 {% macro render_crash_list(crash_list = None, has_more=False) %}
   {% if crash_list %}
     {% for crash_report in crash_list %}
-      <ul class="list-group">
-          <li class="list-group-item">
-            <span class="badge">{{ crash_report.count }}</span>
-            <a href="{{ crash_report.fingerprint|crash_uri }}">{{ crash_report.fingerprint }}</a>
-          </li>
-      </ul>
+      {{ render_crash_snippet(crash_report) }}
       {% if loop.last and has_more %}
         <nav>
           <ul class="pager">

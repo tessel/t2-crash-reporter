@@ -5,7 +5,7 @@ import json
 import jinja2
 
 from model import from_milliseconds
-from util import crash_uri
+from util import crash_uri, snippetize
 
 
 # decorator for all requests
@@ -60,6 +60,7 @@ class RRequest(object):
             # add readable date filter to make it available for templates
             RRequest.environment.filters['readable_date'] = readable_date
             RRequest.environment.filters['crash_uri'] = crash_uri
+            RRequest.environment.filters['snippetize'] = snippetize
 
         return RRequest.environment
 
