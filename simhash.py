@@ -1,7 +1,7 @@
 def sim_hash(trace, limit=512):
     if trace:
         result = 0
-        lines = trace.split('\r?\n')
+        lines = trace.splitlines(True)
         words = []
         for line in lines:
             word_list = line.split()
