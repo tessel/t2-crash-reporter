@@ -45,21 +45,38 @@ class CrashReport(db.Expando):
     labels = db.StringListProperty(default=[])
     crash = db.TextProperty(required=True)
     fingerprint = db.StringProperty(required=True)
-    date_time = db.DateTimeProperty(required=True, default=datetime.datetime.utcnow())
+    date_time = db.DateTimeProperty(required=True, auto_now_add=True)
     count = db.IntegerProperty(default=0)
 
     @classmethod
     def get_count(cls, name):
-        total = memcache.get(name)
+        cache_key = CrashReport.count_cache_key(name)
+        total = memcache.get(cache_key)
         if total is None:
             total = 0
             q = CrashReport.all()
             q.filter('name = ', name)
-            for counter in q.run():
-                total += counter.count
-            memcache.set(name, str(total))
-        ''' total can be a string (when cached) '''
+            for entity in q.run():
+                total += entity.count
+            ''' total can be a string (when cached) for 2 mins '''
+            memcache.set(cache_key, str(total), 120)
         return int(total)
+
+    @classmethod
+    def most_recent_crash(cls, name):
+        cache_key = CrashReport.recent_crash_cache_key(name)
+        most_recent = memcache.get(cache_key)
+        if most_recent is None:
+            most_recent = 0
+            q = CrashReport.all()
+            q.filter('name = ', name)
+            for entity in q.run():
+                in_millis = to_milliseconds(entity.date_time)
+                if most_recent <= in_millis:
+                    most_recent = in_millis
+            '''most_recent can be a string (when cached) for 2 mins'''
+            memcache.set(cache_key, str(most_recent), 120)
+        return int(most_recent)
 
     @classmethod
     def add_or_remove(cls, fingerprint, crash, labels=None, is_add=True, delta=1):
@@ -73,11 +90,13 @@ class CrashReport(db.Expando):
         if is_add:
             crash_report.count += delta
             crash_report.put()
-            memcache.incr(key_name, delta, initial_value=0)
+            # update caches
+            memcache.incr(CrashReport.count_cache_key(key_name), delta, initial_value=0)
+            memcache.set(CrashReport.recent_crash_cache_key(key_name), to_milliseconds(crash_report.date_time))
         else:
             crash_report.count -= delta
             crash_report.put()
-            memcache.decr(key_name, delta)
+            memcache.decr(CrashReport.count_cache_key(key_name), delta)
         return crash_report
 
     @classmethod
@@ -95,13 +114,21 @@ class CrashReport(db.Expando):
         return cls.kind() + '_' + name
 
     @classmethod
+    def count_cache_key(cls, name):
+        return 'total_%s' % name
+
+    @classmethod
+    def recent_crash_cache_key(cls, name):
+        return 'most_recent_%s' % name
+
+    @classmethod
     def to_json(cls, entity):
         return {
             'key': unicode(entity.key()),
             'crash': entity.crash,
             'labels': entity.labels or list(),
             'fingerprint': entity.fingerprint,
-            'time': to_milliseconds(entity.date_time),  # in millis
+            'time': CrashReport.most_recent_crash(entity.name),  # in millis
             'count': CrashReport.get_count(entity.name)
         }
 
