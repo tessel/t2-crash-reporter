@@ -126,7 +126,8 @@ application = webapp2.WSGIApplication(
         webapp2.Route('/crashes/submit', handler='main.SubmitCrashHandler', name='submit_crash'),
         webapp2.Route('/crashes', handler='main.ViewCrashHandler', name='view_crash'),
         webapp2.Route('/trending', handler='main.TrendingCrashesHandler', name='trending_crashes'),
-        webapp2.Route('/admin/crashes/upgrade', handler='update_schema.UpdateSchemaHandler', name='update_crash_reports'),
+        webapp2.Route('/admin/crashes/upgrade',
+                      handler='update_schema.UpdateSchemaHandler', name='update_crash_reports'),
     ]
     , debug=True
 )

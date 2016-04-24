@@ -49,6 +49,8 @@ class CrashReport(db.Expando):
     count = db.IntegerProperty(default=0)
     # state can be one of 'unresolved'|'pending'|'submitted'|'resolved'
     state = db.StringProperty(default='unresolved')
+    # reflects the schema version
+    version = db.StringProperty(default='2')
 
     @classmethod
     def get_count(cls, name):
@@ -62,6 +64,17 @@ class CrashReport(db.Expando):
                 total += entity.count
             memcache.set(cache_key, str(total))
         return int(total)
+
+    @classmethod
+    def clear_cache(cls, name):
+        memcache.delete(CrashReport.count_cache_key(name))
+        CrashReport.clear_properties_cache()
+
+    @classmethod
+    def clear_properties_cache(cls, name):
+        keys = list()
+        keys.extend(CrashReport.recent_crash_property_key(name, key) for key in ['date_time', 'state', 'labels'])
+        memcache.delete_multi(keys)
 
     @classmethod
     def _most_recent_property(
@@ -119,6 +132,9 @@ class CrashReport(db.Expando):
             crash_report.count -= delta
             crash_report.put()
             memcache.decr(CrashReport.count_cache_key(key_name), delta)
+
+        # clear properties cache
+        CrashReport.clear_properties_cache(key_name)
         return crash_report
 
     @classmethod

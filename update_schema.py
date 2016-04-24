@@ -23,8 +23,15 @@ class SchemaUpdater(object):
 
         crash_reports = []
         for crash_report in query.fetch(limit=BATCH_SIZE):
-            crash_report.state = 'unresolved'
-            crash_reports.append(crash_report)
+            updated = False
+            if not crash_report.version:
+                crash_report.version = '2'
+                updated = True
+            if not crash_report.state:
+                crash_report.state = 'unresolved'
+                updated = True
+            if updated:
+                crash_reports.append(crash_report)
 
         if crash_reports:
             updated = len(crash_reports)
