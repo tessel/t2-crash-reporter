@@ -1,8 +1,9 @@
-from model import CrashReport
-from simhash import sim_hash
-from search_model import Search
-
+from google.appengine.ext import db
 from google.appengine.ext.db import Key
+
+from model import CrashReport
+from search_model import Search
+from simhash import sim_hash
 
 
 def crash_uri(fingerprint):
@@ -37,8 +38,30 @@ class CrashReports(object):
         return crash_report
 
     @classmethod
+    def update_report_state(cls, fingerprint, new_state):
+        # state can be one of 'unresolved'|'pending'|'submitted'|'resolved'
+        name = CrashReport.key_name(fingerprint)
+        to_update = list()
+        q = CrashReport.all()
+        q.filter('name = ', name)
+        for crash_report in q.run():
+            # update state
+            crash_report.state = new_state
+            to_update.append(crash_report)
+
+        # update datastore and search indexes
+        db.put(to_update)
+        Search.add_crash_reports(to_update)
+        # clear memcache
+        CrashReport.clear_properties_cache(name)
+        # return crash report
+        return CrashReport.get_crash(fingerprint)
+
+    @classmethod
     def trending(cls, start=None, limit=20):
         q = CrashReport.all()
+        # only search for unresolved crashes
+        q.filter('state = ', 'unresolved')
         if start:
             q.filter('__key__ >', Key(start))
         q.order('__key__')
