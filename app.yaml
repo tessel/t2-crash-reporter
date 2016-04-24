@@ -4,6 +4,9 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
+builtins:
+- deferred: on
+
 libraries:
 - name: jinja2
   version: latest
@@ -16,6 +19,11 @@ handlers:
   static_dir: static
   http_headers:
     Cache-Control: max-age=31556926
+
+- url: /admin
+  script: main.application
+  login: admin
+  secure: always
 
 - url: .*
   script: main.application
