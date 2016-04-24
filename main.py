@@ -34,7 +34,7 @@ class RootHandler(webapp2.RequestHandler):
         directory_links.append(Link('Trending Crashes', uri_for('trending_crashes')))
         directory_links.append(Link('Submit Crash', uri_for('submit_crash')))
         directory_links.append(Link('View Crash', uri_for('view_crash')))
-        directory_links.append(Link('Update Crash Report State', uri_for('update_crash_state')))
+        directory_links.append(Link('Update Crash Report', uri_for('update_crash_state')))
         self.add_parameter('directory_links', directory_links)
         self.render('index.html')
 
