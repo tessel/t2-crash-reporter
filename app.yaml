@@ -20,10 +20,5 @@ handlers:
   http_headers:
     Cache-Control: max-age=31556926
 
-- url: /admin
-  script: main.application
-  login: admin
-  secure: always
-
 - url: .*
   script: main.application
