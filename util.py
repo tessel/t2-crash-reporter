@@ -60,8 +60,11 @@ class CrashReports(object):
     @classmethod
     def trending(cls, start=None, limit=20):
         q = CrashReport.all()
-        # only search for unresolved crashes
+        # only search for crashes that are not resolved
         q.filter('state = ', 'unresolved')
+        q.filter('state = ', 'pending')
+        q.filter('state = ', 'submitted')
+
         if start:
             q.filter('__key__ >', Key(start))
         q.order('__key__')
