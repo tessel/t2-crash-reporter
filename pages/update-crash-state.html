@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from 'breadcrumbs-macro.html' import render_breadcrumbs %}
+{% from 'nav-macro.html' import render_navbar %}
+{% from 'messages-macro.html' import render_messages %}
+{% from 'crash-report-macro.html' import render_crash_report %}
+
+{% block navbar %}
+  {{ render_navbar (brand=rrequest.params.brand, links=rrequest.params.nav_links) }}
+{% endblock %}
+
+{% block main %}
+  {# render breadcrumbs #}
+  {{ render_breadcrumbs(crumbs=rrequest.breadcrumbs) }}
+
+   <h2>Update Crash Report State<small></small></h2>
+
+  <div class="row">
+    <div class="col-md-8">
+      <form method="post" class="well">
+        <div class="form-group">
+          <label for="fingerprint">Enter Fingerprint</label>
+          <input name="fingerprint" id="fingerprint" type="text" />
+        </div>
+        <div class="form-group">
+          <label for="state">State</label>
+          <select name="state" id="state">
+            <option value="unresolved">Unresolved</option>
+            <option value="pending">Pending</option>
+            <option value="submitted">Submitted</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f">Response Format</label>
+          <select name="f" id="f">
+            <option value="html">HTML</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pretty">Prettyify</label>
+          <select name="pretty" id="pretty">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  {# render crash report #}
+  {{ render_crash_report(crash_report = rrequest.params.crash_report) }}
+
+  {# render messages #}
+  {{ render_messages(messages=rrequest.messages) }}
+
+{% endblock %}

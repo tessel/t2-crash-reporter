@@ -47,6 +47,10 @@ class CrashReport(db.Expando):
     fingerprint = db.StringProperty(required=True)
     date_time = db.DateTimeProperty(required=True, auto_now_add=True)
     count = db.IntegerProperty(default=0)
+    # state can be one of 'unresolved'|'pending'|'submitted'|'resolved'
+    state = db.StringProperty(default='unresolved')
+    # reflects the schema version
+    version = db.StringProperty(default='2')
 
     @classmethod
     def get_count(cls, name):
@@ -58,25 +62,57 @@ class CrashReport(db.Expando):
             q.filter('name = ', name)
             for entity in q.run():
                 total += entity.count
-            ''' total can be a string (when cached) for 2 mins '''
-            memcache.set(cache_key, str(total), 120)
+            memcache.set(cache_key, str(total))
         return int(total)
 
     @classmethod
-    def most_recent_crash(cls, name):
-        cache_key = CrashReport.recent_crash_cache_key(name)
-        most_recent = memcache.get(cache_key)
-        if most_recent is None:
+    def clear_cache(cls, name):
+        memcache.delete(CrashReport.count_cache_key(name))
+        CrashReport.clear_properties_cache()
+
+    @classmethod
+    def clear_properties_cache(cls, name):
+        keys = list()
+        keys.extend(CrashReport.recent_crash_property_key(name, key) for key in ['date_time', 'state', 'labels'])
+        memcache.delete_multi(keys)
+
+    @classmethod
+    def _most_recent_property(
+            cls, name, property_name, default_value=None, serialize=lambda x: x, deserialize=lambda x: x, ttl=120):
+
+        cache_key = CrashReport.recent_crash_property_key(name, property_name)
+        most_recent_value = memcache.get(cache_key)
+        if most_recent_value is None:
             most_recent = 0
+            most_recent_value = default_value
+
             q = CrashReport.all()
             q.filter('name = ', name)
             for entity in q.run():
                 in_millis = to_milliseconds(entity.date_time)
                 if most_recent <= in_millis:
                     most_recent = in_millis
-            '''most_recent can be a string (when cached) for 2 mins'''
-            memcache.set(cache_key, str(most_recent), 120)
-        return int(most_recent)
+                    most_recent_value = serialize(entity.__getattribute__(property_name))
+            memcache.set(cache_key, most_recent_value, ttl)
+        to_return = deserialize(most_recent_value)
+        return to_return
+
+    @classmethod
+    def most_recent_crash(cls, name):
+        return CrashReport._most_recent_property(
+            name, 'date_time', serialize=lambda x: str(to_milliseconds(x)), deserialize=lambda x: int(x))
+
+    @classmethod
+    def most_recent_labels(cls, name):
+        return CrashReport._most_recent_property(
+            name, 'labels',
+            default_value=list(),
+            serialize=lambda x: ','.join(x),
+            deserialize=lambda x: x.split(','))
+
+    @classmethod
+    def most_recent_state(cls, name):
+        return CrashReport._most_recent_property(name, 'state', default_value='unresolved')
 
     @classmethod
     def add_or_remove(cls, fingerprint, crash, labels=None, is_add=True, delta=1):
@@ -92,11 +128,13 @@ class CrashReport(db.Expando):
             crash_report.put()
             # update caches
             memcache.incr(CrashReport.count_cache_key(key_name), delta, initial_value=0)
-            memcache.set(CrashReport.recent_crash_cache_key(key_name), to_milliseconds(crash_report.date_time))
         else:
             crash_report.count -= delta
             crash_report.put()
             memcache.decr(CrashReport.count_cache_key(key_name), delta)
+
+        # clear properties cache
+        CrashReport.clear_properties_cache(key_name)
         return crash_report
 
     @classmethod
@@ -118,18 +156,19 @@ class CrashReport(db.Expando):
         return 'total_%s' % name
 
     @classmethod
-    def recent_crash_cache_key(cls, name):
-        return 'most_recent_%s' % name
+    def recent_crash_property_key(cls, name, property_name):
+        return 'most_recent_%s/%s' % (name, property_name)
 
     @classmethod
     def to_json(cls, entity):
         return {
             'key': unicode(entity.key()),
             'crash': entity.crash,
-            'labels': entity.labels or list(),
+            'labels': CrashReport.most_recent_labels(entity.name),
             'fingerprint': entity.fingerprint,
             'time': CrashReport.most_recent_crash(entity.name),  # in millis
-            'count': CrashReport.get_count(entity.name)
+            'count': CrashReport.get_count(entity.name),
+            'state': CrashReport.most_recent_state(entity.name)
         }
 
 
