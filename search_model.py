@@ -34,7 +34,7 @@ class Search(object):
         labels = [search.TextField(name='labels', value=label)
                   for label in crash_report.labels]
         fields.extend(labels)
-        document = search.Document(doc_id=crash_report.name, fields=fields)
+        document = search.Document(doc_id=unicode(crash_report.key()), fields=fields)
         return document
 
     @classmethod
@@ -44,8 +44,8 @@ class Search(object):
             try:
                 index = search.Index(name=__INDEX__)
                 index.put(document)
-            except Search.Error:
-                logging.exception('Unable to add document to index')
+            except search.Error, e:
+                logging.exception('Unable to add document to index', e)
 
     @classmethod
     def add_crash_reports(cls, crash_reports):
@@ -54,8 +54,8 @@ class Search(object):
             try:
                 index = search.Index(name=__INDEX__)
                 index.put(documents)
-            except Search.Error:
-                logging.exception('Unable to add documents to index')
+            except search.Error, e:
+                logging.exception('Unable to add documents to index', e)
 
     @classmethod
     def search(cls, query):
