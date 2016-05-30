@@ -2,11 +2,14 @@ import StringIO
 import csv
 
 import webapp2
+import urllib
+import logging
 from webapp2 import uri_for
 
 from common import common_request
 from model import CrashReport, Link
 from util import CrashReports
+from search_model import Search
 
 
 class RequestHandlerUtils(object):
@@ -35,6 +38,7 @@ class RootHandler(webapp2.RequestHandler):
         directory_links.append(Link('Submit Crash', uri_for('submit_crash')))
         directory_links.append(Link('View Crash', uri_for('view_crash')))
         directory_links.append(Link('Update Crash Report', uri_for('update_crash_state')))
+        directory_links.append(Link('Search', uri_for('search')))
         self.add_parameter('directory_links', directory_links)
         self.render('index.html')
 
@@ -153,6 +157,48 @@ class TrendingCrashesHandler(webapp2.RequestHandler):
         self.render('trending.html')
 
 
+class SearchCrashesHandler(webapp2.RequestHandler):
+    @classmethod
+    def common(cls, handler):
+        handler.add_parameter('title', 'Search crashes')
+        handler.add_breadcrumb('Home', uri_for('home'))
+        handler.add_breadcrumb('Search', uri_for('search'))
+        RequestHandlerUtils.add_brand(handler)
+        RequestHandlerUtils.add_nav_links(handler)
+
+    def get(self):
+        self.post()
+
+    @common_request
+    def post(self):
+        SearchCrashesHandler.common(self)
+        if not self.empty_query_string('query'):
+            query = self.get_parameter('query')
+            cursor = self.get_parameter('cursor')
+            try:
+                search_results = Search.search(query, cursor=cursor)
+                results = search_results.get('results', list())
+                if results and len(results) > 0:
+                    self.add_parameter('results', results)
+                    self.add_to_json('results', results)
+
+                cursor = search_results.get('cursor', None)
+                if cursor:
+                    query_fragment = {
+                        'query': query,
+                        'cursor': cursor
+                    }
+                    encoded_fragment = urllib.urlencode(query_fragment)
+                    self.add_parameter('query_fragment', encoded_fragment)
+                    self.add_to_json('query_fragment', encoded_fragment)
+            except Exception, e:
+                logging.exception('Exception : %s' % unicode(e))
+                self.add_error('Exception : %s' % unicode(e))
+                self.add_to_json('error', unicode(e))
+
+        self.render('search.html')
+
+
 application = webapp2.WSGIApplication(
     [
         webapp2.Route('/', handler='main.RootHandler', name='home'),
@@ -160,6 +206,7 @@ application = webapp2.WSGIApplication(
         webapp2.Route('/crashes/submit', handler='main.SubmitCrashHandler', name='submit_crash'),
         webapp2.Route('/crashes', handler='main.ViewCrashHandler', name='view_crash'),
         webapp2.Route('/trending', handler='main.TrendingCrashesHandler', name='trending_crashes'),
+        webapp2.Route('/search', handler='main.SearchCrashesHandler', name='search'),
     ]
     , debug=True
 )
