@@ -3,7 +3,9 @@
 This project helps collect [Tessel 2](https://tessel.io/) CLI crash reports,
 and makes them easily accessible and searchable.
 
+## URL
 
+The crash reporter is available [here](http://crash-reporter.tessel.io/).
 
 
 
