@@ -40,7 +40,8 @@ class RootHandler(webapp2.RequestHandler):
 
 
 class SubmitCrashHandler(webapp2.RequestHandler):
-    def common(self, handler):
+    @classmethod
+    def common(cls, handler):
         handler.add_parameter('title', 'Submit Crash Report')
         handler.add_breadcrumb('Home', uri_for('home'))
         handler.add_breadcrumb('Submit Crash', uri_for('submit_crash'))
@@ -49,7 +50,7 @@ class SubmitCrashHandler(webapp2.RequestHandler):
 
     @common_request
     def get(self):
-        self.request_handler.common(self)
+        SubmitCrashHandler.common(self)
         self.render('submit-crash.html')
 
     @classmethod
@@ -66,7 +67,7 @@ class SubmitCrashHandler(webapp2.RequestHandler):
 
     @common_request
     def post(self):
-        self.request_handler.common(self)
+        SubmitCrashHandler.common(self)
         if self.empty_query_string('crash', 'labels'):
             self.request_handler.redirect(uri_for('submit_crash'))
         else:
@@ -82,7 +83,8 @@ class SubmitCrashHandler(webapp2.RequestHandler):
 
 
 class ViewCrashHandler(webapp2.RequestHandler):
-    def common(self, handler):
+    @classmethod
+    def common(cls, handler):
         handler.add_parameter('title', 'Show Crash')
         handler.add_breadcrumb('Home', uri_for('home'))
         handler.add_breadcrumb('View Crash', uri_for('view_crash'))
@@ -91,7 +93,7 @@ class ViewCrashHandler(webapp2.RequestHandler):
 
     @common_request
     def get(self):
-        self.request_handler.common(self)
+        ViewCrashHandler.common(self)
         if not self.empty_query_string('fingerprint'):
             fingerprint = self.get_parameter('fingerprint')
             crash_report = CrashReport.get_crash(fingerprint)
@@ -103,7 +105,8 @@ class ViewCrashHandler(webapp2.RequestHandler):
 
 
 class UpdateCrashStateHandler(webapp2.RequestHandler):
-    def common(self, handler):
+    @classmethod
+    def common(cls, handler):
         handler.add_parameter('title', 'Update Crash State')
         handler.add_breadcrumb('Home', uri_for('home'))
         handler.add_breadcrumb('Update Crash State', uri_for('update_crash_state'))
@@ -112,12 +115,12 @@ class UpdateCrashStateHandler(webapp2.RequestHandler):
 
     @common_request
     def get(self):
-        self.request_handler.common(self)
+        UpdateCrashStateHandler.common(self)
         self.render('update-crash-state.html')
 
     @common_request
     def post(self):
-        self.request_handler.common(self)
+        UpdateCrashStateHandler.common(self)
         if not self.empty_query_string('fingerprint', 'state'):
             fingerprint = self.get_parameter('fingerprint')
             state = self.get_parameter('state', default_value='unresolved',
@@ -131,7 +134,8 @@ class UpdateCrashStateHandler(webapp2.RequestHandler):
 
 
 class TrendingCrashesHandler(webapp2.RequestHandler):
-    def common(self, handler):
+    @classmethod
+    def common(cls, handler):
         handler.add_parameter('title', 'Show Crash')
         handler.add_breadcrumb('Home', uri_for('home'))
         handler.add_breadcrumb('Trending Crashes', uri_for('trending_crashes'))
@@ -140,7 +144,7 @@ class TrendingCrashesHandler(webapp2.RequestHandler):
 
     @common_request
     def get(self):
-        self.request_handler.common(self)
+        TrendingCrashesHandler.common(self)
         start = self.get_parameter('start')
         trending_result = CrashReports.trending(start=start)
         self.add_parameter('trending', trending_result.get('trending', list()))
