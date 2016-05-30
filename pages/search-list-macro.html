@@ -1,0 +1,19 @@
+{% from 'crash-report-snippet-macro.html' import render_crash_snippet %}
+
+{% macro render_search_list(crash_list = None, query_fragment=None) %}
+  {% if crash_list %}
+    <div class="col-md-7 search-results">
+      <h4>Search Results</h4>
+      {% for crash_report in crash_list %}
+        {{ render_crash_snippet(crash_report) }}
+        {% if loop.last and query_fragment %}
+          <nav>
+            <ul class="pager">
+              <li><a href="/search?{{query_fragment}}">More</a></li>
+            </ul>
+          </nav>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}

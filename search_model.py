@@ -58,11 +58,32 @@ class Search(object):
                 logging.exception('Unable to add documents to index', e)
 
     @classmethod
-    def search(cls, query):
+    def search(cls, query, cursor=None, limit=25):
         # documentation for the query string format is at
         # https://cloud.google.com/appengine/docs/python/search/query_strings
+
+        if not cursor:
+            cursor = search.Cursor()
+        else:
+            cursor = search.Cursor(web_safe_string=cursor)
+
         if query:
             index = search.Index(name=__INDEX__)
+
+            # default sort options
+            sort_time = search.SortExpression(
+                expression='time',
+                direction=search.SortExpression.DESCENDING,
+                default_value=0)
+            sort_options = search.SortOptions(expressions=[sort_time])
+
+            # query options
+            query_options = search.QueryOptions(
+                cursor=cursor,
+                limit=limit,
+                sort_options=sort_options)
+            query = search.Query(query_string=query, options=query_options)
+            # search
             results = index.search(query)
             models = list()
             for document in results:
@@ -72,11 +93,16 @@ class Search(object):
                     'labels': Search._find_fields(document, 'labels'),
                     'fingerprint': Search._find_first(document, 'fingerprint'),
                     'time': to_milliseconds(Search._find_first(document, 'time')),  # in millis
-                    'count': CrashReport.get_count(document.doc_id)
+                    'count': CrashReport.get_count(CrashReport.key_name(Search._find_first(document, 'fingerprint')))
                 }
                 models.append(model)
+
+            cursor = None
+            if results.cursor:
+                cursor = results.cursor.web_safe_string
+
             return {
-                'cursor': results.cursor,
+                'cursor': cursor,
                 'results': models
             }
         else:

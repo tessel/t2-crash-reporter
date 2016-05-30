@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from 'breadcrumbs-macro.html' import render_breadcrumbs %}
+{% from 'nav-macro.html' import render_navbar %}
+{% from 'messages-macro.html' import render_messages %}
+{% from 'errors-macro.html' import render_errors %}
+{% from 'search-list-macro.html' import render_search_list %}
+
+{% block navbar %}
+  {{ render_navbar (brand=rrequest.params.brand, links=rrequest.params.nav_links) }}
+{% endblock %}
+
+{% block main %}
+  {# render breadcrumbs #}
+  {{ render_breadcrumbs(crumbs=rrequest.breadcrumbs) }}
+
+  <h2>Search<small></small></h2>
+
+  <div class="row">
+    <div class="col-md-8">
+      <form method="post" class="well">
+        <div class="form-group">
+          <label for="query">Query</label> <br/>
+          <textarea rows="2" cols="60" name="query" id="query"></textarea>
+          <div class="panel panel-primary">
+            <div class="panel-body">
+              <p>
+              Searchable Properties include
+                <code>fingerprint</code>, <code>crash</code>,
+                <code>time</code>, <code>count</code> and Crash <code>state</code>.
+              </p>
+              <p>
+                Examples:
+                query = <code> *</code>, <code>state:unresolved</code>
+              </p>
+              <p>
+                Query Format is documented
+                <a href="https://cloud.google.com/appengine/docs/python/search/query_strings" target="_blank">
+                  here.
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="f">Response Format</label>
+          <select name="f" id="f">
+            <option value="html">HTML</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pretty">Prettyify</label>
+          <select name="pretty" id="pretty">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
+
+    {# render search list #}
+      {{ render_search_list(crash_list=rrequest.params.results,
+        query_fragment=rrequest.params.query_fragment) }}
+
+  </div>
+
+  {# render messages #}
+  {{ render_messages(messages=rrequest.messages) }}
+
+  {# render errors if any #}
+  {{ render_errors(errors=rrequest.errors) }}
+
+{% endblock %}
