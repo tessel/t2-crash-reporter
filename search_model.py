@@ -85,17 +85,22 @@ class Search(object):
             query = search.Query(query_string=query, options=query_options)
             # search
             results = index.search(query)
+            fingerprints = set()
             models = list()
             for document in results:
+                fingerprint = Search._find_first(document, 'fingerprint')
                 model = {
                     'key': Search._find_first(document, 'key'),
                     'crash': Search._find_first(document, 'crash'),
                     'labels': Search._find_fields(document, 'labels'),
-                    'fingerprint': Search._find_first(document, 'fingerprint'),
+                    'fingerprint': fingerprint,
                     'time': to_milliseconds(Search._find_first(document, 'time')),  # in millis
                     'count': CrashReport.get_count(CrashReport.key_name(Search._find_first(document, 'fingerprint')))
                 }
-                models.append(model)
+                # de-dupe fingerprints
+                if fingerprint not in fingerprints:
+                    fingerprints.add(fingerprint)
+                    models.append(model)
 
             cursor = None
             if results.cursor:
