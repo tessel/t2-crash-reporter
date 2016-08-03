@@ -40,20 +40,46 @@ class CrashReports(object):
     @classmethod
     def update_report_state(cls, fingerprint, new_state):
         # state can be one of 'unresolved'|'pending'|'submitted'|'resolved'
+        return CrashReports.update_crash_report(fingerprint, {
+           'state': new_state
+        })
+
+    @classmethod
+    def update_report_issue(cls, fingerprint, issue):
+        return CrashReports.update_crash_report(fingerprint, {
+            'issue': issue
+        })
+
+    @classmethod
+    def update_crash_report(cls, fingerprint, delta_state):
         name = CrashReport.key_name(fingerprint)
         to_update = list()
         q = CrashReport.all()
         q.filter('name = ', name)
         for crash_report in q.run():
             # update state
-            crash_report.state = new_state
+            # only allow * mutable * properties of crash reports to be updated
+
+            # having to manually update properties on the entity this was, as expando entities
+            # do not have a way to update an entity via a property name :(
+            if 'labels' in delta_state:
+                crash_report.labels = delta_state.get('labels')
+            if 'date_time' in delta_state:
+                crash_report.date_time = delta_state.get('date_time')
+            if 'count' in delta_state:
+                crash_report.count = delta_state.get('count')
+            if 'issue' in delta_state:
+                crash_report.issue = delta_state.get('issue')
+            if 'state' in delta_state:
+                crash_report.state = delta_state.get('state')
+
             to_update.append(crash_report)
 
         # update datastore and search indexes
         db.put(to_update)
         Search.add_crash_reports(to_update)
         # clear memcache
-        CrashReport.clear_properties_cache(name)
+        CrashReport.clear_cache(name)
         # return crash report
         return CrashReport.get_crash(fingerprint)
 

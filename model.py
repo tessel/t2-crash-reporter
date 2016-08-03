@@ -49,6 +49,8 @@ class CrashReport(db.Expando):
     count = db.IntegerProperty(default=0)
     # state can be one of 'unresolved'|'pending'|'submitted'|'resolved'
     state = db.StringProperty(default='unresolved')
+    # github issue
+    issue = db.StringProperty(required=False)
     # reflects the schema version
     version = db.StringProperty(default='2')
 
@@ -68,12 +70,15 @@ class CrashReport(db.Expando):
     @classmethod
     def clear_cache(cls, name):
         memcache.delete(CrashReport.count_cache_key(name))
-        CrashReport.clear_properties_cache()
+        CrashReport.clear_properties_cache(name)
 
     @classmethod
     def clear_properties_cache(cls, name):
         keys = list()
-        keys.extend(CrashReport.recent_crash_property_key(name, key) for key in ['date_time', 'state', 'labels'])
+        keys.extend(
+            CrashReport.recent_crash_property_key(name, key) for key in
+            ['date_time', 'state', 'labels', 'issue']
+        )
         memcache.delete_multi(keys)
 
     @classmethod
@@ -113,6 +118,10 @@ class CrashReport(db.Expando):
     @classmethod
     def most_recent_state(cls, name):
         return CrashReport._most_recent_property(name, 'state', default_value='unresolved')
+
+    @classmethod
+    def most_recent_issue(cls, name):
+        return CrashReport._most_recent_property(name, 'issue')
 
     @classmethod
     def add_or_remove(cls, fingerprint, crash, labels=None, is_add=True, delta=1):
@@ -168,7 +177,8 @@ class CrashReport(db.Expando):
             'fingerprint': entity.fingerprint,
             'time': CrashReport.most_recent_crash(entity.name),  # in millis
             'count': CrashReport.get_count(entity.name),
-            'state': CrashReport.most_recent_state(entity.name)
+            'state': CrashReport.most_recent_state(entity.name),
+            'issue': CrashReport.most_recent_issue(entity.name)
         }
 
 

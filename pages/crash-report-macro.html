@@ -21,6 +21,9 @@
         {% endif %}
       </ul>
       <pre class="prettyprint">{{ crash_report.crash }}</pre>
+      {% if crash_report.issue %}
+        <p class="text-info">Github Issue {{ crash_report.issue }}</p>
+      {% endif %}
       <p class="text-info">Last report submitted at {{ crash_report.time|readable_date }}</p>
     </div>
   {% endif %}

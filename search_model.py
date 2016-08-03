@@ -30,6 +30,7 @@ class Search(object):
             search.DateField(name='time', value=crash_report.date_time),
             search.NumberField(name='count', value=CrashReport.get_count(crash_report.name)),
             search.AtomField(name='state', value=crash_report.state),
+            search.AtomField(name='issue', value=crash_report.issue),
         ]
         labels = [search.TextField(name='labels', value=label)
                   for label in crash_report.labels]
@@ -95,7 +96,8 @@ class Search(object):
                     'labels': Search._find_fields(document, 'labels'),
                     'fingerprint': fingerprint,
                     'time': to_milliseconds(Search._find_first(document, 'time')),  # in millis
-                    'count': CrashReport.get_count(CrashReport.key_name(Search._find_first(document, 'fingerprint')))
+                    'count': CrashReport.get_count(CrashReport.key_name(Search._find_first(document, 'fingerprint'))),
+                    'issue': Search._find_first(document, 'issue')
                 }
                 # de-dupe fingerprints
                 if fingerprint not in fingerprints:
