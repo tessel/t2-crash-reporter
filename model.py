@@ -68,18 +68,13 @@ class CrashReport(db.Expando):
         return int(total)
 
     @classmethod
-    def clear_cache(cls, name):
-        memcache.delete(CrashReport.count_cache_key(name))
-        CrashReport.clear_properties_cache(name)
-
-    @classmethod
     def clear_properties_cache(cls, name):
         keys = list()
         keys.extend(
             CrashReport.recent_crash_property_key(name, key) for key in
             ['date_time', 'state', 'labels', 'issue']
         )
-        memcache.delete_multi(keys)
+        memcache.delete_multi(keys=keys)
 
     @classmethod
     def _most_recent_property(

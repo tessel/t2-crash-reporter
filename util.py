@@ -1,3 +1,5 @@
+import os
+
 from google.appengine.ext import db
 from google.appengine.ext.db import Key
 
@@ -19,6 +21,11 @@ def snippetize(trace, snippet_length=3):
         return '%s...' % ''.join(content)
 
 
+def is_appengine_local():
+    server_software = os.environ['SERVER_SOFTWARE']
+    return server_software.startswith('Development')
+
+
 class CrashReportException(Exception):
     """
     Defines the exception type
@@ -35,6 +42,10 @@ class CrashReports(object):
         crash_report = CrashReport.add_or_remove(fingerprint, report, labels=labels)
         # add crash report to index
         Search.add_to_index(crash_report)
+        # GitHub integration
+        # delaying import as there is a circular import
+        from github_utils import GithubOrchestrator
+        GithubOrchestrator.manage_github_issue(crash_report)
         return crash_report
 
     @classmethod
@@ -79,7 +90,7 @@ class CrashReports(object):
         db.put(to_update)
         Search.add_crash_reports(to_update)
         # clear memcache
-        CrashReport.clear_cache(name)
+        CrashReport.clear_properties_cache(name)
         # return crash report
         return CrashReport.get_crash(fingerprint)
 

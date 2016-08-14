@@ -1,15 +1,15 @@
 import StringIO
 import csv
+import logging
+import urllib
 
 import webapp2
-import urllib
-import logging
 from webapp2 import uri_for
 
 from common import common_request
 from model import CrashReport, Link
-from util import CrashReports
 from search_model import Search
+from util import CrashReports
 
 
 class RequestHandlerUtils(object):

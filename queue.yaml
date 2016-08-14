@@ -1,0 +1,4 @@
+queue:
+# github task queue
+- name: github-queue
+  rate: 1/s

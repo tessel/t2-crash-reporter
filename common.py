@@ -1,8 +1,9 @@
-from google.appengine.api import memcache
-import os
-import logging
 import json
+import logging
+import os
+
 import jinja2
+from google.appengine.api import memcache
 
 from model import from_milliseconds
 from util import crash_uri, snippetize
