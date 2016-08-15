@@ -6,6 +6,7 @@ import jinja2
 from google.appengine.api import memcache
 
 from model import from_milliseconds
+from github_utils import issue_url
 from util import crash_uri, snippetize
 
 
@@ -62,6 +63,7 @@ class RRequest(object):
             RRequest.environment.filters['readable_date'] = readable_date
             RRequest.environment.filters['crash_uri'] = crash_uri
             RRequest.environment.filters['snippetize'] = snippetize
+            RRequest.environment.filters['issue_url'] = issue_url
 
         return RRequest.environment
 

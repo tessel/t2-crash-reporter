@@ -120,13 +120,20 @@ class CrashReport(db.Expando):
 
     @classmethod
     def add_or_remove(cls, fingerprint, crash, labels=None, is_add=True, delta=1):
+        # use an issue if one already exists
+        issue = CrashReport.most_recent_issue(CrashReport.key_name(fingerprint))
         key_name = CrashReport.key_name(fingerprint)
         config = ShardedCounterConfig.get_sharded_config(key_name)
         shards = config.shards
         shard_to_use = random.randint(0, shards-1)
         shard_key_name = key_name + '_' + str(shard_to_use)
-        crash_report = CrashReport.get_or_insert(shard_key_name,
-                                                 name=key_name, crash=crash, fingerprint=fingerprint, labels=labels)
+        crash_report = CrashReport \
+            .get_or_insert(shard_key_name,
+                           name=key_name,
+                           crash=crash,
+                           fingerprint=fingerprint,
+                           labels=labels,
+                           issue=issue)
         if is_add:
             crash_report.count += delta
             crash_report.put()
