@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 
@@ -38,8 +37,8 @@ class GithubOrchestrator(object):
     """
     __QUEUE__ = 'github-queue'
     # Every x times that we need to update the task with a comment
-    __NOTIFY_FREQUENCY__ = 1
-    # seconds
+    __NOTIFY_FREQUENCY__ = 10
+    # seconds for recursive enqueue
     __SCHEDULE_DELAY__ = 10
 
     @classmethod
@@ -57,9 +56,11 @@ class GithubOrchestrator(object):
             issue = crash_report.issue
             count = CrashReport.get_count(crash_report.name)
             if issue is None:
+                '''
+                # there is a chance that we get a new crash before an issue was submitted before.
+                # in this case we postpone the management of this crash. However we cannot distinguish between
+                # the race condition and crashes that don't have corresponding issues to begin with.
                 if count > 1:
-                    # there is a chance that we get a new crash before an issue was submitted before.
-                    # in this case we postpone the management of this crash.
                     delta = datetime.timedelta(seconds=GithubOrchestrator.__SCHEDULE_DELAY__)
                     countdown = datetime.datetime.now() + delta
                     deferred.defer(
@@ -68,13 +69,16 @@ class GithubOrchestrator(object):
                         countdown=countdown,
                         _queue=GithubOrchestrator.__QUEUE__)
                     logging.info('Enqueued management task for the future for %s' % crash_report.fingerprint)
+
                 else:
-                    # new crash
-                    deferred.defer(
-                        GithubOrchestrator.create_issue_job,
-                        crash_report.fingerprint, _queue=GithubOrchestrator.__QUEUE__)
-                    logging.info(
-                        'Enqueued job for new issue on GitHub for fingerprint %s' % crash_report.fingerprint)
+                    # new crash handling here.
+                '''
+                # new crash
+                deferred.defer(
+                    GithubOrchestrator.create_issue_job,
+                    crash_report.fingerprint, _queue=GithubOrchestrator.__QUEUE__)
+                logging.info(
+                    'Enqueued job for new issue on GitHub for fingerprint %s' % crash_report.fingerprint)
             elif count > 0 and count % GithubOrchestrator.__NOTIFY_FREQUENCY__ == 0:
                 # add comments for an existing crash
                 deferred.defer(
