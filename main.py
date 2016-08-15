@@ -7,7 +7,7 @@ import webapp2
 from webapp2 import uri_for
 
 from common import common_request
-from model import CrashReport, Link
+from model import CrashReport, GlobalPreferences, Link
 from search_model import Search
 from util import CrashReports
 
@@ -39,6 +39,7 @@ class RootHandler(webapp2.RequestHandler):
         directory_links.append(Link('View Crash', uri_for('view_crash')))
         directory_links.append(Link('Update Crash Report', uri_for('update_crash_state')))
         directory_links.append(Link('Search', uri_for('search')))
+        directory_links.append(Link('Update Global Preferences', uri_for('update_global_preferences')))
         self.add_parameter('directory_links', directory_links)
         self.render('index.html')
 
@@ -199,6 +200,38 @@ class SearchCrashesHandler(webapp2.RequestHandler):
         self.render('search.html')
 
 
+class UpdatePreferencesHandler(webapp2.RequestHandler):
+
+    # a list of all global prefences
+    __PREFERENCES__ = [
+        GlobalPreferences.__INTEGRATE_WITH_GITHUB__,
+    ]
+
+    @classmethod
+    def common(cls, handler):
+        handler.add_parameter('title', 'Update Global Preferences')
+        handler.add_breadcrumb('Home', uri_for('home'))
+        handler.add_breadcrumb('Update Global Preferences', uri_for('update_global_preferences'))
+        RequestHandlerUtils.add_brand(handler)
+        RequestHandlerUtils.add_nav_links(handler)
+
+    def get(self):
+        self.post()
+
+    @common_request
+    def post(self):
+        UpdatePreferencesHandler.common(self)
+        for preference in UpdatePreferencesHandler.__PREFERENCES__:
+            if not self.empty_query_string(preference):
+                preference_value = self.get_parameter(preference)
+                GlobalPreferences.update(preference, preference_value)
+
+                self.add_message('Updated %s to %s' % (preference, preference_value))
+                self.add_to_json('success', True)
+
+        self.render('update-global-preferences.html')
+
+
 application = webapp2.WSGIApplication(
     [
         webapp2.Route('/', handler='main.RootHandler', name='home'),
@@ -207,6 +240,7 @@ application = webapp2.WSGIApplication(
         webapp2.Route('/crashes', handler='main.ViewCrashHandler', name='view_crash'),
         webapp2.Route('/trending', handler='main.TrendingCrashesHandler', name='trending_crashes'),
         webapp2.Route('/search', handler='main.SearchCrashesHandler', name='search'),
+        webapp2.Route('/preferences/update', handler='main.UpdatePreferencesHandler', name='update_global_preferences'),
     ]
     , debug=True
 )

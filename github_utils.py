@@ -5,7 +5,7 @@ import logging
 from google.appengine.ext import deferred
 
 from github import Github
-from model import CrashReport
+from model import CrashReport, GlobalPreferences
 from util import is_appengine_local, crash_uri, CrashReports
 
 # constants
@@ -47,6 +47,12 @@ class GithubOrchestrator(object):
         """
         Manages the GitHub issue.
         """
+        # check global github preference
+        preference_value = GlobalPreferences.get_property(GlobalPreferences.__INTEGRATE_WITH_GITHUB__, 'true')
+        if preference_value != 'true':
+            logging.info('GitHub integration is turned off. Ignoring request.')
+            return
+
         if crash_report is not None:
             issue = crash_report.issue
             count = CrashReport.get_count(crash_report.name)
@@ -136,7 +142,7 @@ class GithubClient(object):
 
     @classmethod
     def issue_comment(cls, count):
-        new_comment = 'More crashes incoming. Current crash count is at %s.' % count
+        new_comment = 'More crashes incoming. Current crash count is at `%s`.' % count
         return new_comment
 
     def __init__(self):

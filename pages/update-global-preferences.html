@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from 'breadcrumbs-macro.html' import render_breadcrumbs %}
+{% from 'nav-macro.html' import render_navbar %}
+{% from 'messages-macro.html' import render_messages %}
+
+{% block navbar %}
+  {{ render_navbar (brand=rrequest.params.brand, links=rrequest.params.nav_links) }}
+{% endblock %}
+
+{% block main %}
+  {# render breadcrumbs #}
+  {{ render_breadcrumbs(crumbs=rrequest.breadcrumbs) }}
+
+  <h2>Update Global Preferences</h2>
+
+  <div class="row">
+    <div class="col-md-8">
+      <form method="post" class="well">
+        <div class="form-group">
+          <label for="integrate_with_github">Integrate with GitHub</label>
+          <select name="integrate_with_github" id="integrate_with_github">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f">Response Format</label>
+          <select name="f" id="f">
+            <option value="html">HTML</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pretty">Prettyify</label>
+          <select name="pretty" id="pretty">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  {# render messages #}
+  {{ render_messages(messages=rrequest.messages) }}
+
+{% endblock %}

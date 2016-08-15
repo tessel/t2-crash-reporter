@@ -14,6 +14,40 @@ def to_milliseconds(date_time):
     return int(round(delta.total_seconds() * 1000))
 
 
+class GlobalPreferences(db.Expando):
+
+    # github integration preference
+    __INTEGRATE_WITH_GITHUB__ = 'integrate_with_github'
+
+    """
+    Global preferences that can control the behavior of the crash reporter.
+    """
+    property_name = db.StringProperty()
+    property_value = db.StringProperty()
+
+    @classmethod
+    def key_name(cls, property_name):
+        return cls.kind() + '_' + property_name
+
+    @classmethod
+    def get_property(cls, property_name, default_value=None):
+        key_name = GlobalPreferences.key_name(property_name)
+        preference = GlobalPreferences.get_by_key_name(key_names=key_name)
+        if preference is None:
+            return default_value
+        else:
+            return preference.property_value
+
+    @classmethod
+    def update(cls, property_name, property_value):
+        key_name = GlobalPreferences.key_name(property_name)
+        preference = GlobalPreferences.get_or_insert(key_name, property_name=property_name)
+        preference.property_value = property_value
+        # update
+        db.put(preference)
+        return preference
+
+
 class ShardedCounterConfig(db.Expando):
     """
     Represents the sharded counter config, that helps us figure out how many shards to use for a sharded counter
