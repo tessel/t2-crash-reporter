@@ -14,6 +14,40 @@ def to_milliseconds(date_time):
     return int(round(delta.total_seconds() * 1000))
 
 
+class GlobalPreferences(db.Expando):
+
+    # github integration preference
+    __INTEGRATE_WITH_GITHUB__ = 'integrate_with_github'
+
+    """
+    Global preferences that can control the behavior of the crash reporter.
+    """
+    property_name = db.StringProperty()
+    property_value = db.StringProperty()
+
+    @classmethod
+    def key_name(cls, property_name):
+        return cls.kind() + '_' + property_name
+
+    @classmethod
+    def get_property(cls, property_name, default_value=None):
+        key_name = GlobalPreferences.key_name(property_name)
+        preference = GlobalPreferences.get_by_key_name(key_names=key_name)
+        if preference is None:
+            return default_value
+        else:
+            return preference.property_value
+
+    @classmethod
+    def update(cls, property_name, property_value):
+        key_name = GlobalPreferences.key_name(property_name)
+        preference = GlobalPreferences.get_or_insert(key_name, property_name=property_name)
+        preference.property_value = property_value
+        # update
+        db.put(preference)
+        return preference
+
+
 class ShardedCounterConfig(db.Expando):
     """
     Represents the sharded counter config, that helps us figure out how many shards to use for a sharded counter
@@ -49,6 +83,8 @@ class CrashReport(db.Expando):
     count = db.IntegerProperty(default=0)
     # state can be one of 'unresolved'|'pending'|'submitted'|'resolved'
     state = db.StringProperty(default='unresolved')
+    # github issue
+    issue = db.StringProperty(required=False)
     # reflects the schema version
     version = db.StringProperty(default='2')
 
@@ -66,15 +102,13 @@ class CrashReport(db.Expando):
         return int(total)
 
     @classmethod
-    def clear_cache(cls, name):
-        memcache.delete(CrashReport.count_cache_key(name))
-        CrashReport.clear_properties_cache()
-
-    @classmethod
     def clear_properties_cache(cls, name):
         keys = list()
-        keys.extend(CrashReport.recent_crash_property_key(name, key) for key in ['date_time', 'state', 'labels'])
-        memcache.delete_multi(keys)
+        keys.extend(
+            CrashReport.recent_crash_property_key(name, key) for key in
+            ['date_time', 'state', 'labels', 'issue']
+        )
+        memcache.delete_multi(keys=keys)
 
     @classmethod
     def _most_recent_property(
@@ -115,14 +149,25 @@ class CrashReport(db.Expando):
         return CrashReport._most_recent_property(name, 'state', default_value='unresolved')
 
     @classmethod
+    def most_recent_issue(cls, name):
+        return CrashReport._most_recent_property(name, 'issue')
+
+    @classmethod
     def add_or_remove(cls, fingerprint, crash, labels=None, is_add=True, delta=1):
+        # use an issue if one already exists
+        issue = CrashReport.most_recent_issue(CrashReport.key_name(fingerprint))
         key_name = CrashReport.key_name(fingerprint)
         config = ShardedCounterConfig.get_sharded_config(key_name)
         shards = config.shards
         shard_to_use = random.randint(0, shards-1)
         shard_key_name = key_name + '_' + str(shard_to_use)
-        crash_report = CrashReport.get_or_insert(shard_key_name,
-                                                 name=key_name, crash=crash, fingerprint=fingerprint, labels=labels)
+        crash_report = CrashReport \
+            .get_or_insert(shard_key_name,
+                           name=key_name,
+                           crash=crash,
+                           fingerprint=fingerprint,
+                           labels=labels,
+                           issue=issue)
         if is_add:
             crash_report.count += delta
             crash_report.put()
@@ -168,7 +213,8 @@ class CrashReport(db.Expando):
             'fingerprint': entity.fingerprint,
             'time': CrashReport.most_recent_crash(entity.name),  # in millis
             'count': CrashReport.get_count(entity.name),
-            'state': CrashReport.most_recent_state(entity.name)
+            'state': CrashReport.most_recent_state(entity.name),
+            'issue': CrashReport.most_recent_issue(entity.name)
         }
 
 

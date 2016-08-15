@@ -1,3 +1,5 @@
+import os
+
 from google.appengine.ext import db
 from google.appengine.ext.db import Key
 
@@ -19,6 +21,11 @@ def snippetize(trace, snippet_length=3):
         return '%s...' % ''.join(content)
 
 
+def is_appengine_local():
+    server_software = os.environ['SERVER_SOFTWARE']
+    return server_software.startswith('Development')
+
+
 class CrashReportException(Exception):
     """
     Defines the exception type
@@ -35,18 +42,48 @@ class CrashReports(object):
         crash_report = CrashReport.add_or_remove(fingerprint, report, labels=labels)
         # add crash report to index
         Search.add_to_index(crash_report)
+        # GitHub integration
+        # delaying import as there is a circular import
+        from github_utils import GithubOrchestrator
+        GithubOrchestrator.manage_github_issue(crash_report)
         return crash_report
 
     @classmethod
     def update_report_state(cls, fingerprint, new_state):
         # state can be one of 'unresolved'|'pending'|'submitted'|'resolved'
+        return CrashReports.update_crash_report(fingerprint, {
+           'state': new_state
+        })
+
+    @classmethod
+    def update_report_issue(cls, fingerprint, issue):
+        return CrashReports.update_crash_report(fingerprint, {
+            'issue': issue
+        })
+
+    @classmethod
+    def update_crash_report(cls, fingerprint, delta_state):
         name = CrashReport.key_name(fingerprint)
         to_update = list()
         q = CrashReport.all()
         q.filter('name = ', name)
         for crash_report in q.run():
             # update state
-            crash_report.state = new_state
+            # only allow * mutable * properties of crash reports to be updated
+
+            # having to manually update properties on the entity this was, as expando entities
+            # do not have a way to update an entity via a property name :(
+            if 'labels' in delta_state:
+                crash_report.labels = delta_state.get('labels')
+            if 'date_time' in delta_state:
+                crash_report.date_time = delta_state.get('date_time')
+            if 'count' in delta_state:
+                crash_report.count = delta_state.get('count')
+            if 'issue' in delta_state:
+                crash_report.issue = delta_state.get('issue')
+            if 'state' in delta_state:
+                crash_report.state = delta_state.get('state')
+
             to_update.append(crash_report)
 
         # update datastore and search indexes
