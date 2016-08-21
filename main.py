@@ -1,5 +1,6 @@
 import StringIO
 import csv
+import json
 import logging
 import urllib
 
@@ -232,6 +233,38 @@ class UpdatePreferencesHandler(webapp2.RequestHandler):
         self.render('update-global-preferences.html')
 
 
+class GitHubWebHooksHandler(webapp2.RequestHandler):
+    @common_request
+    def post(self):
+        """
+        Handle GitHub webhooks
+        """
+        headers = self.request_handler.request.headers
+        event_type = headers.get('X-GitHub-Event')
+        request_body = json.loads(self.request_handler.request.body)
+
+        if event_type is not None and request_body is not None:
+            logging.info('X-GitHub-Event {0}'.format(event_type))
+            if event_type == 'issues':
+                '''
+                We are looking for issue closed event types.
+                https://developer.github.com/v3/activity/events/types/#issuesevent
+                '''
+                action = request_body.get('action')
+                if action == 'closed':
+                    '''
+                    Handle closed event
+                    '''
+                    # the full issue body
+                    issue = request_body.get('issue')
+                    # issue number (treated as a string in the datastore)
+                    number = str(issue.get('number'))
+                    CrashReports.close_github_issue(number)
+                    logging.info('Marked GitHub issue {0} as resolved'.format(number))
+                else:
+                    logging.info('Other action {0}. Ignoring.'.format(action))
+
+
 application = webapp2.WSGIApplication(
     [
         webapp2.Route('/', handler='main.RootHandler', name='home'),
@@ -241,6 +274,7 @@ application = webapp2.WSGIApplication(
         webapp2.Route('/trending', handler='main.TrendingCrashesHandler', name='trending_crashes'),
         webapp2.Route('/search', handler='main.SearchCrashesHandler', name='search'),
         webapp2.Route('/preferences/update', handler='main.UpdatePreferencesHandler', name='update_global_preferences'),
+        webapp2.Route('/webhooks/github', handler='main.GitHubWebHooksHandler', name='github_webhooks'),
     ]
     , debug=True
 )
