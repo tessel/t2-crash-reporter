@@ -1,4 +1,7 @@
+# client secrets
 client_secrets.json
+debug_client_secrets.json
+
 ._DS_Store
 .DS_Store
 *.pyc

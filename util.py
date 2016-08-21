@@ -56,6 +56,17 @@ class CrashReports(object):
         })
 
     @classmethod
+    def close_github_issue(cls, issue_number):
+        # find the fingerprint
+        q = CrashReport.all()
+        q.filter('issue = ', issue_number)
+        for entity in q.run(limit=1):
+            fingerprint = entity.fingerprint
+            cls.update_crash_report(fingerprint, {
+                'state': 'resolved'
+            })
+
+    @classmethod
     def update_report_issue(cls, fingerprint, issue):
         return CrashReports.update_crash_report(fingerprint, {
             'issue': issue
