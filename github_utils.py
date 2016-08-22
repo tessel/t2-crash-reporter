@@ -151,7 +151,7 @@ class GithubClient(object):
         crash = crash_report.crash.encode('ascii', 'ignore')
         fingerprint = crash_report.fingerprint
         crash_report_uri = '{0}{1}'.format(self.reporter_host, crash_uri(fingerprint))
-        body = '{0}\n\nFull report is at [{1}]({2})'.format(crash, fingerprint, crash_report_uri)
+        body = '`{0}`\n\nFull report is at [{1}]({2})'.format(crash, fingerprint, crash_report_uri)
         return body
 
     @classmethod
