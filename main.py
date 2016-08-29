@@ -78,11 +78,13 @@ class SubmitCrashHandler(webapp2.RequestHandler):
             self.request_handler.redirect(uri_for('submit_crash'))
         else:
             crash = self.get_parameter('crash')
+            argv = SubmitCrashHandler.csv_to_list(self.get_parameter('argv'))
             labels = SubmitCrashHandler.csv_to_list(self.get_parameter('labels'))
             # strip spaces around the crash report
-            crash_report = CrashReports.add_crash_report(crash.strip(), labels)
-            message = 'Added Crash Report with fingerprint, count) => (%s, %s)' % \
-                      (crash_report.fingerprint, CrashReport.get_count(crash_report.name))
+            crash_report = CrashReports.add_crash_report(crash.strip(), argv=argv, labels=labels)
+            message = 'Added Crash Report with fingerprint, count) => ({0}, {1})'.format(
+                crash_report.fingerprint, CrashReport.get_count(crash_report.name))
+
             self.add_message(message)
             self.add_to_json('crash_report', CrashReport.to_json(crash_report))
             self.render('submit-crash.html')
