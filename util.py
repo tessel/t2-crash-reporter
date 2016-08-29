@@ -84,6 +84,8 @@ class CrashReports(object):
 
             # having to manually update properties on the entity this was, as expando entities
             # do not have a way to update an entity via a property name :(
+            if 'argv' in delta_state:
+                crash_report.argv = delta_state.get('argv')
             if 'labels' in delta_state:
                 crash_report.labels = delta_state.get('labels')
             if 'date_time' in delta_state:
