@@ -12,8 +12,17 @@
             <b>State </b>
           </li>
         {% endif %}
+        {% if crash_report.argv %}
+          <li class="list-group-item">
+            <b>Arguments</b>
+            {% for arg in crash_report.argv %}
+              <span class="label label-default large-text">{{ arg }}</span>
+            {% endfor %}
+          </li>
+        {% endif %}
         {% if crash_report.labels %}
           <li class="list-group-item">
+            <b>Labels</b>
             {% for label in crash_report.labels %}
               <span class="label label-primary large-text">{{ label }}</span>
             {% endfor %}

@@ -85,6 +85,8 @@ class CrashReport(db.Expando):
     state = db.StringProperty(default='unresolved')
     # github issue
     issue = db.StringProperty(required=False)
+    # argv
+    argv = db.StringListProperty(default=[])
     # reflects the schema version
     version = db.StringProperty(default='2')
 
@@ -106,7 +108,7 @@ class CrashReport(db.Expando):
         keys = list()
         keys.extend(
             CrashReport.recent_crash_property_key(name, key) for key in
-            ['date_time', 'state', 'labels', 'issue']
+            ['date_time', 'state', 'labels', 'issue', 'argv']
         )
         memcache.delete_multi(keys=keys)
 
@@ -153,7 +155,11 @@ class CrashReport(db.Expando):
         return CrashReport._most_recent_property(name, 'issue')
 
     @classmethod
-    def add_or_remove(cls, fingerprint, crash, labels=None, is_add=True, delta=1):
+    def most_recent_argv(cls, name):
+        return CrashReport._most_recent_property(name, 'argv')
+
+    @classmethod
+    def add_or_remove(cls, fingerprint, crash, argv=None, labels=None, is_add=True, delta=1):
         # use an issue if one already exists
         issue = CrashReport.most_recent_issue(CrashReport.key_name(fingerprint))
         key_name = CrashReport.key_name(fingerprint)
@@ -166,6 +172,7 @@ class CrashReport(db.Expando):
                            name=key_name,
                            crash=crash,
                            fingerprint=fingerprint,
+                           argv=argv,
                            labels=labels,
                            issue=issue)
         if is_add:
@@ -209,6 +216,7 @@ class CrashReport(db.Expando):
         return {
             'key': unicode(entity.key()),
             'crash': entity.crash,
+            'argv': CrashReport.most_recent_argv(entity.name),
             'labels': CrashReport.most_recent_labels(entity.name),
             'fingerprint': entity.fingerprint,
             'time': CrashReport.most_recent_crash(entity.name),  # in millis

@@ -37,9 +37,9 @@ class CrashReports(object):
     Encapsulates all the logic for creating/ querying crash reports.
     """
     @classmethod
-    def add_crash_report(cls, report, labels=None):
+    def add_crash_report(cls, report, argv=None, labels=None):
         fingerprint = sim_hash(report)
-        crash_report = CrashReport.add_or_remove(fingerprint, report, labels=labels)
+        crash_report = CrashReport.add_or_remove(fingerprint, report, argv=argv, labels=labels)
         # add crash report to index
         Search.add_to_index(crash_report)
         # GitHub integration

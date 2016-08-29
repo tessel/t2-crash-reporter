@@ -32,8 +32,9 @@ class Search(object):
             search.AtomField(name='state', value=crash_report.state),
             search.AtomField(name='issue', value=crash_report.issue),
         ]
-        labels = [search.TextField(name='labels', value=label)
-                  for label in crash_report.labels]
+        argv = [search.TextField(name='argv', value=arg) for arg in crash_report.argv]
+        labels = [search.TextField(name='labels', value=label) for label in crash_report.labels]
+        fields.extend(argv)
         fields.extend(labels)
         document = search.Document(doc_id=unicode(crash_report.key()), fields=fields)
         return document
@@ -93,6 +94,7 @@ class Search(object):
                 model = {
                     'key': Search._find_first(document, 'key'),
                     'crash': Search._find_first(document, 'crash'),
+                    'argv': Search._find_fields(document, 'argv'),
                     'labels': Search._find_fields(document, 'labels'),
                     'fingerprint': fingerprint,
                     'time': to_milliseconds(Search._find_first(document, 'time')),  # in millis
