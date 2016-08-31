@@ -156,7 +156,7 @@ class CrashReport(db.Expando):
 
     @classmethod
     def most_recent_argv(cls, name):
-        return CrashReport._most_recent_property(name, 'argv')
+        return CrashReport._most_recent_property(name, 'argv', default_value=[])
 
     @classmethod
     def add_or_remove(cls, fingerprint, crash, argv=None, labels=None, is_add=True, delta=1):
@@ -167,6 +167,8 @@ class CrashReport(db.Expando):
         shards = config.shards
         shard_to_use = random.randint(0, shards-1)
         shard_key_name = key_name + '_' + str(shard_to_use)
+        if not argv:
+            argv = []
         crash_report = CrashReport \
             .get_or_insert(shard_key_name,
                            name=key_name,
@@ -205,11 +207,11 @@ class CrashReport(db.Expando):
 
     @classmethod
     def count_cache_key(cls, name):
-        return 'total_%s' % name
+        return 'total_{0}'.format(name)
 
     @classmethod
     def recent_crash_property_key(cls, name, property_name):
-        return 'most_recent_%s/%s' % (name, property_name)
+        return 'most_recent_{0}/{1}'.format(name, property_name)
 
     @classmethod
     def to_json(cls, entity):
