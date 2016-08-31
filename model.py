@@ -156,7 +156,7 @@ class CrashReport(db.Expando):
 
     @classmethod
     def most_recent_argv(cls, name):
-        return CrashReport._most_recent_property(name, 'argv', default_value=[])
+        return CrashReport._most_recent_property(name, 'argv', default_value=list())
 
     @classmethod
     def add_or_remove(cls, fingerprint, crash, argv=None, labels=None, is_add=True, delta=1):
