@@ -1,6 +1,7 @@
 import json
 import logging
 
+from google.appengine.api import memcache
 from google.appengine.ext import deferred
 
 from github import Github
@@ -46,6 +47,10 @@ class GithubOrchestrator(object):
     __SCHEDULE_DELAY__ = 10
 
     @classmethod
+    def backoff_cache_key(cls, crash_report):
+        return 'github_task_{0}'.format(crash_report.fingerprint)
+
+    @classmethod
     def manage_github_issue(cls, crash_report):
         """
         Manages the GitHub issue.
@@ -60,29 +65,8 @@ class GithubOrchestrator(object):
             issue = crash_report.issue
             count = CrashReport.get_count(crash_report.name)
             if issue is None:
-                '''
-                # there is a chance that we get a new crash before an issue was submitted before.
-                # in this case we postpone the management of this crash. However we cannot distinguish between
-                # the race condition and crashes that don't have corresponding issues to begin with.
-                if count > 1:
-                    delta = datetime.timedelta(seconds=GithubOrchestrator.__SCHEDULE_DELAY__)
-                    countdown = datetime.datetime.now() + delta
-                    deferred.defer(
-                        GithubOrchestrator.manage_github_issue_as_task,
-                        crash_report.fingerprint,
-                        countdown=countdown,
-                        _queue=GithubOrchestrator.__QUEUE__)
-                    logging.info('Enqueued management task for the future for %s' % crash_report.fingerprint)
-
-                else:
-                    # new crash handling here.
-                '''
                 # new crash
-                deferred.defer(
-                    GithubOrchestrator.create_issue_job,
-                    crash_report.fingerprint, _queue=GithubOrchestrator.__QUEUE__)
-                logging.info(
-                    'Enqueued job for new issue on GitHub for fingerprint {0}'.format(crash_report.fingerprint))
+                cls.new_crash_with_backoff(crash_report)
             elif count > 0 and count % GithubOrchestrator.__NOTIFY_FREQUENCY__ == 0:
                 # add comments for an existing crash
                 deferred.defer(
@@ -91,6 +75,28 @@ class GithubOrchestrator(object):
                     'Enqueued job for adding comments on GitHub for fingerprint {0}'.format(crash_report.fingerprint))
             else:
                 logging.debug('No pending tasks.')
+
+    @classmethod
+    def new_crash_with_backoff(cls, crash_report):
+        """
+        there is a chance that we get a new crash before an issue was submitted before.
+        """
+        backoff_cache_key = cls.backoff_cache_key(crash_report)
+        backoff_value = memcache.get(backoff_cache_key)
+        if not backoff_value:
+            # A task does not exist. Queue a job.
+            memcache.set(backoff_cache_key, "in_progress")
+            deferred.defer(
+                GithubOrchestrator.create_issue_job,
+                crash_report.fingerprint, _queue=GithubOrchestrator.__QUEUE__)
+            logging.info(
+                'Enqueued job for new issue on GitHub for fingerprint {0}'.format(crash_report.fingerprint))
+        else:
+            # task already in progress, backoff
+            logging.info(
+                'A GitHub task is already in progress. Waiting to the dust to settle for fingerprint {0}'
+                .format(crash_report.fingerprint)
+            )
 
     @classmethod
     def manage_github_issue_as_task(cls, fingerprint):
@@ -122,6 +128,10 @@ class GithubOrchestrator(object):
                     'Updating crash report with fingerprint ({0}) complete.'.format(updated_report.fingerprint))
         except Exception, e:
             logging.error('Error creating issue for fingerprint ({0}) [{1}]'.format(fingerprint, str(e)))
+        finally:
+            # remove the backoff cache key, so future jobs may be enqueued
+            backoff_cache_key = cls.backoff_cache_key(crash_report)
+            memcache.delete(backoff_cache_key)
 
     @classmethod
     def add_comment_job(cls, fingerprint):
