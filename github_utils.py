@@ -74,7 +74,7 @@ class GithubOrchestrator(object):
                 logging.info(
                     'Enqueued job for adding comments on GitHub for fingerprint {0}'.format(crash_report.fingerprint))
             else:
-                logging.debug('No pending tasks.')
+                logging.debug('No pending tasks for fingerprint {0}.'.format(crash_report.fingerprint))
 
     @classmethod
     def new_crash_with_backoff(cls, crash_report):
