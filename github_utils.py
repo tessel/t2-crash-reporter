@@ -29,11 +29,11 @@ def issue_url(issue_number):
     Returns the GitHub issue URL.
     """
     if is_appengine_local():
-        repo_name = '%s/%s' % (DEBUG_OWNER, DEBUG_REPO)
+        repo_name = '{0}/{1}'.format(DEBUG_OWNER, DEBUG_REPO)
     else:
-        repo_name = '%s/%s' % (OWNER, REPO)
+        repo_name = '{0}/{1}'.format(OWNER, REPO)
 
-    return 'https://github.com/%s/issues/%s' % (repo_name, issue_number)
+    return 'https://github.com/{0}/issues/{1}'.format(repo_name, issue_number)
 
 
 class GithubOrchestrator(object):
@@ -47,8 +47,12 @@ class GithubOrchestrator(object):
     __SCHEDULE_DELAY__ = 10
 
     @classmethod
-    def backoff_cache_key(cls, crash_report):
-        return 'github_task_{0}'.format(crash_report.fingerprint)
+    def backoff_crash_key_new_crash(cls, crash_report):
+        return 'github_task_new_crash_{0}'.format(crash_report.fingerprint)
+
+    @classmethod
+    def backoff_crash_key_new_comment(cls, crash_report):
+        return 'github_task_new_comment_{0}'.format(crash_report.fingerprint)
 
     @classmethod
     def manage_github_issue(cls, crash_report):
@@ -69,10 +73,7 @@ class GithubOrchestrator(object):
                 cls.new_crash_with_backoff(crash_report)
             elif count > 0 and count % GithubOrchestrator.__NOTIFY_FREQUENCY__ == 0:
                 # add comments for an existing crash
-                deferred.defer(
-                    GithubOrchestrator.add_comment_job, crash_report.fingerprint, _queue=GithubOrchestrator.__QUEUE__)
-                logging.info(
-                    'Enqueued job for adding comments on GitHub for fingerprint {0}'.format(crash_report.fingerprint))
+                cls.new_comment_with_backoff(crash_report)
             else:
                 logging.debug('No pending tasks for fingerprint {0}.'.format(crash_report.fingerprint))
 
@@ -81,7 +82,7 @@ class GithubOrchestrator(object):
         """
         there is a chance that we get a new crash before an issue was submitted before.
         """
-        backoff_cache_key = cls.backoff_cache_key(crash_report)
+        backoff_cache_key = cls.backoff_crash_key_new_crash(crash_report)
         backoff_value = memcache.get(backoff_cache_key)
         if not backoff_value:
             # A task does not exist. Queue a job.
@@ -95,7 +96,30 @@ class GithubOrchestrator(object):
             # task already in progress, backoff
             logging.info(
                 'A GitHub task is already in progress. Waiting to the dust to settle for fingerprint {0}'
-                .format(crash_report.fingerprint)
+                    .format(crash_report.fingerprint)
+            )
+
+    @classmethod
+    def new_comment_with_backoff(cls, crash_report):
+        """
+        there is a chance that this is a hot issue, and that there are too many crashes coming in.
+        try and use backoff, when you are posting a new comment.
+        """
+        backoff_cache_key = cls.backoff_crash_key_new_comment(crash_report)
+        backoff_value = memcache.get(backoff_cache_key)
+        if not backoff_value:
+            # A task does not exist. Queue a job.
+            memcache.set(backoff_cache_key, "in_progress")
+            deferred.defer(
+                GithubOrchestrator.add_comment_job,
+                crash_report.fingerprint, _queue=GithubOrchestrator.__QUEUE__)
+            logging.info(
+                'Enqueued job for new comment on GitHub for fingerprint {0}'.format(crash_report.fingerprint))
+        else:
+            # task already in progress, backoff
+            logging.info(
+                'A GitHub task is already in progress. Waiting to the dust to settle for fingerprint {0}'
+                    .format(crash_report.fingerprint)
             )
 
     @classmethod
@@ -111,6 +135,7 @@ class GithubOrchestrator(object):
         """
         Handles the create issue job.
         """
+        crash_report = None
         try:
             github_client = GithubClient()
             crash_report = CrashReport.get_crash(fingerprint)
@@ -130,7 +155,7 @@ class GithubOrchestrator(object):
             logging.error('Error creating issue for fingerprint ({0}) [{1}]'.format(fingerprint, str(e)))
         finally:
             # remove the backoff cache key, so future jobs may be enqueued
-            backoff_cache_key = cls.backoff_cache_key(crash_report)
+            backoff_cache_key = cls.backoff_crash_key_new_crash(crash_report)
             memcache.delete(backoff_cache_key)
 
     @classmethod
@@ -138,6 +163,7 @@ class GithubOrchestrator(object):
         """
         Handles the create comment job
         """
+        crash_report = None
         try:
             github_client = GithubClient()
             crash_report = CrashReport.get_crash(fingerprint)
@@ -145,12 +171,17 @@ class GithubOrchestrator(object):
                 github_client.create_comment(crash_report)
         except Exception, e:
             logging.error('Error creating comment for fingerprint ({0}) [{1}]'.format(fingerprint, str(e)))
+        finally:
+            # remove the backoff cache key, so future jobs may be enqueued
+            backoff_cache_key = cls.backoff_crash_key_new_comment(crash_report)
+            memcache.delete(backoff_cache_key)
 
 
 class GithubClient(object):
     """
     A set of github utilities.
     """
+
     @classmethod
     def issue_title(cls, crash_report=None):
         crash = crash_report.crash
